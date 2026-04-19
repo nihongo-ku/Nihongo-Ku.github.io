@@ -246,9 +246,155 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   .user-avatar{margin:0 auto}
   .user-row{justify-content:center}
 }
+
+/* ══════════════════════════════════════════
+   ANIMATED GRADIENT BACKGROUND
+══════════════════════════════════════════ */
+body::before{content:'';position:fixed;inset:0;z-index:-1;
+  background:
+    radial-gradient(ellipse 600px 500px at 15% 20%,rgba(108,143,255,0.10) 0%,transparent 70%),
+    radial-gradient(ellipse 500px 400px at 85% 80%,rgba(167,139,250,0.09) 0%,transparent 70%),
+    radial-gradient(ellipse 400px 300px at 50% 50%,rgba(45,212,191,0.06) 0%,transparent 70%);
+  animation:bgPulse 14s ease-in-out infinite alternate;pointer-events:none}
+@keyframes bgPulse{
+  0%  {opacity:.7;filter:hue-rotate(0deg)}
+  50% {opacity:1;filter:hue-rotate(15deg)}
+  100%{opacity:.8;filter:hue-rotate(-10deg)}}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);z-index:-1;pointer-events:none;animation:orbFloat linear infinite}
+.orb1{width:500px;height:500px;background:rgba(108,143,255,0.06);top:-150px;left:-150px;animation-duration:22s}
+.orb2{width:400px;height:400px;background:rgba(167,139,250,0.07);bottom:-100px;right:-100px;animation-duration:28s;animation-direction:reverse}
+.orb3{width:300px;height:300px;background:rgba(45,212,191,0.05);top:45%;left:45%;animation-duration:35s;animation-delay:-10s}
+@keyframes orbFloat{
+  0%  {transform:translate(0,0) scale(1)}
+  25% {transform:translate(50px,-60px) scale(1.08)}
+  50% {transform:translate(-30px,70px) scale(0.93)}
+  75% {transform:translate(-60px,-20px) scale(1.05)}
+  100%{transform:translate(0,0) scale(1)}}
+
+/* ══════════════════════════════════════════
+   PAGE TRANSITION
+══════════════════════════════════════════ */
+.page.active{animation:pageIn .35s cubic-bezier(.22,1,.36,1) both}
+@keyframes pageIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* General hover lifts */
+.card:hover,.stat-box:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(108,143,255,0.08);transition:transform .2s ease,box-shadow .2s ease}
+.stat-box{transition:transform .2s ease,box-shadow .2s ease}
+.today-card{transition:all .2s cubic-bezier(.22,1,.36,1)}
+.kanji-card{transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.kanji-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(167,139,250,0.12)}
+.mod-item{transition:all .2s ease}
+.mod-item:hover{transform:translateY(-1px)}
+
+/* Button presses */
+.auth-btn:active,.btn-primary:active{transform:scale(.97)}
+.fc-btn:active{transform:scale(.95) translateY(2px) !important}
+.quiz-opt{transition:all .15s cubic-bezier(.22,1,.36,1)}
+.quiz-opt:active{transform:scale(.98)}
+
+/* Kana cell bounce */
+.kana-cell{transition:all .18s cubic-bezier(.34,1.56,.64,1)}
+.kana-cell:hover{transform:scale(1.08)}
+.kana-cell:active{transform:scale(.94)}
+.daku-cell{transition:all .18s cubic-bezier(.34,1.56,.64,1)}
+.daku-cell:hover{transform:scale(1.06)}
+.daku-cell:active{transform:scale(.95)}
+
+/* Auth entrance */
+.auth-box{animation:authUp .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes authUp{from{opacity:0;transform:translateY(28px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* Loading fade out */
+#loading-screen.fade-out{animation:fadeOut .4s ease forwards}
+@keyframes fadeOut{to{opacity:0;pointer-events:none;display:none}}
+
+/* ══════════════════════════════════════════
+   FLASHCARD 3D FLIP
+══════════════════════════════════════════ */
+.fc-card-wrapper{perspective:1000px;width:100%;max-width:440px}
+.fc-card{
+  width:100%;transform-style:preserve-3d;
+  transition:transform .55s cubic-bezier(.22,1,.36,1),box-shadow .3s ease,border-color .3s ease;
+  position:relative;cursor:pointer;min-height:240px;
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:36px 32px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.fc-card:hover{box-shadow:0 20px 60px rgba(108,143,255,0.18);border-color:rgba(108,143,255,0.45)}
+.fc-card.flipped{transform:rotateY(180deg)}
+.fc-card-front,.fc-card-back{
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:36px 32px;gap:10px;border-radius:20px}
+.fc-card-back{transform:rotateY(180deg);background:var(--card)}
+
+/* Card next/prev slide */
+@keyframes slideOut{to{opacity:0;transform:translateX(-70px) scale(.9)}}
+@keyframes slideIn {from{opacity:0;transform:translateX(70px) scale(.9)}to{opacity:1;transform:translateX(0) scale(1)}}
+.fc-card.slide-out{animation:slideOut .22s ease forwards}
+.fc-card.slide-in {animation:slideIn .32s cubic-bezier(.22,1,.36,1) forwards}
+
+/* XP pop */
+@keyframes xpPop{0%{transform:scale(1)}40%{transform:scale(1.5);color:var(--yellow)}100%{transform:scale(1)}}
+.xp-burst{animation:xpPop .5s ease}
+
+/* Quiz feedback */
+@keyframes shakeIt{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes popIt  {0%{transform:scale(1)}40%{transform:scale(1.07)}100%{transform:scale(1)}}
+.shake-wrong{animation:shakeIt .4s ease}
+.pop-correct{animation:popIt .3s ease}
+
+/* Kana learned burst */
+@keyframes learnBurst{0%{transform:scale(1)}40%{transform:scale(1.28);box-shadow:0 0 0 8px rgba(74,222,128,.25)}100%{transform:scale(1);box-shadow:none}}
+.learned-pop{animation:learnBurst .4s cubic-bezier(.34,1.56,.64,1)}
+
+/* Streak pulse */
+@keyframes streakPulse{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.5)}50%{box-shadow:0 0 0 8px rgba(251,191,36,0)}}
+.streak-badge{animation:streakPulse 2.5s ease infinite}
+
+/* ══════════════════════════════════════════
+   LEADERBOARD STYLES
+══════════════════════════════════════════ */
+.lb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.lb-title-wrap{display:flex;align-items:center;gap:10px}
+.lb-refresh{padding:6px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;color:var(--muted);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.lb-refresh:hover{border-color:var(--accent);color:var(--accent);transform:rotate(15deg) scale(1.05)}
+.lb-list{display:flex;flex-direction:column;gap:10px}
+.lb-item{
+  display:flex;align-items:center;gap:14px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:13px 16px;
+  transition:all .2s ease;
+  animation:lbIn .4s cubic-bezier(.22,1,.36,1) both}
+.lb-item:nth-child(1){animation-delay:.05s}
+.lb-item:nth-child(2){animation-delay:.1s}
+.lb-item:nth-child(3){animation-delay:.15s}
+.lb-item:nth-child(n+4){animation-delay:.2s}
+@keyframes lbIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
+.lb-item:hover{border-color:var(--accent);transform:translateX(6px);box-shadow:0 4px 20px rgba(108,143,255,0.1)}
+.lb-item.me{border-color:var(--accent2);background:rgba(167,139,250,0.08);box-shadow:0 0 0 1px rgba(167,139,250,0.2)}
+.lb-rank{font-size:20px;font-weight:800;min-width:36px;text-align:center}
+.lb-rank.gold  {color:#fbbf24;text-shadow:0 0 12px rgba(251,191,36,.6)}
+.lb-rank.silver{color:#94a3b8;text-shadow:0 0 8px rgba(148,163,184,.4)}
+.lb-rank.bronze{color:#cd7c47;text-shadow:0 0 8px rgba(205,124,71,.4)}
+.lb-rank.other {color:var(--muted);font-size:15px}
+.lb-avatar{width:40px;height:40px;border-radius:50%;background:rgba(108,143,255,.2);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--accent);flex-shrink:0;border:2px solid transparent;transition:border-color .2s}
+.lb-item.me .lb-avatar{border-color:var(--accent2)}
+.lb-info{flex:1;min-width:0}
+.lb-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-sub {font-size:11px;color:var(--muted);margin-top:2px}
+.lb-xp  {font-size:15px;font-weight:800;color:var(--accent);white-space:nowrap}
+.lb-crown{font-size:16px}
+.lb-empty{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+.lb-loading{text-align:center;padding:30px;color:var(--muted);font-size:13px;animation:pulse 1.5s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 </style>
 </head>
 <body>
+
+<!-- ANIMATED BACKGROUND ORBS -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
 
 <!-- LOADING — ditampilkan saat halaman pertama kali dibuka -->
 <div id="loading-screen">
@@ -307,6 +453,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   <div class="nav-item" onclick="nav('grammar',this)"><span class="nav-icon">≡</span><span>Grammar</span></div>
   <div class="nav-item" onclick="nav('quiz',this)"><span class="nav-icon">✎</span><span>Quiz Harian</span></div>
   <div class="nav-item" onclick="nav('kamus',this)"><span class="nav-icon">漢</span><span>Kamus Kanji</span></div>
+  <div class="nav-item" onclick="nav('leaderboard',this)"><span class="nav-icon">🏆</span><span>Leaderboard</span></div>
   <div class="user-block">
     <div class="user-row">
       <div class="user-avatar" id="user-avatar">?</div>
@@ -391,22 +538,29 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
 <div class="page" id="page-flashcard">
   <div class="page-title">Flashcard <span>SRS</span></div>
-  <div class="page-sub">Klik kartu untuk buka arti.</div>
+  <div class="page-sub">Klik kartu untuk buka arti. Animasi flip 3D!</div>
   <div class="fc-cat-row" id="fc-cats"></div>
   <div class="fc-wrap">
     <div class="fc-prog" id="fc-prog">Kartu 1 dari 10</div>
-    <div class="fc-card" onclick="flipCard()">
-      <div class="fc-kanji jp" id="fc-kanji">会社</div>
-      <div class="fc-hiragana" id="fc-hiragana" style="display:none"></div>
-      <div class="fc-katakana" id="fc-katakana" style="display:none"></div>
-      <div class="fc-romaji" id="fc-romaji" style="display:none"></div>
-      <div class="fc-meaning" id="fc-meaning" style="display:none"></div>
-      <div class="fc-example-block" id="fc-example-block" style="display:none">
-        <div class="fc-ex-jp jp" id="fc-ex-jp"></div>
-        <div class="fc-ex-rom" id="fc-ex-rom"></div>
-        <div class="fc-ex-id" id="fc-ex-id"></div>
+    <div class="fc-card-wrapper">
+      <div class="fc-card" id="fc-card" onclick="flipCard()">
+        <div class="fc-card-front">
+          <div class="fc-kanji jp" id="fc-kanji">会社</div>
+          <div class="fc-hint" id="fc-hint">Ketuk untuk lihat bacaan & arti ↓</div>
+        </div>
+        <div class="fc-card-back">
+          <div class="fc-kanji jp" id="fc-kanji-back" style="font-size:42px"></div>
+          <div class="fc-hiragana" id="fc-hiragana"></div>
+          <div class="fc-katakana" id="fc-katakana"></div>
+          <div class="fc-romaji" id="fc-romaji"></div>
+          <div class="fc-meaning" id="fc-meaning"></div>
+          <div class="fc-example-block" id="fc-example-block">
+            <div class="fc-ex-jp jp" id="fc-ex-jp"></div>
+            <div class="fc-ex-rom" id="fc-ex-rom"></div>
+            <div class="fc-ex-id" id="fc-ex-id"></div>
+          </div>
+        </div>
       </div>
-      <div class="fc-hint" id="fc-hint">Ketuk untuk lihat bacaan & arti ↓</div>
     </div>
     <div class="fc-btns" id="fc-btns" style="display:none">
       <button class="fc-btn btn-lupa" onclick="answer(0)">✗ Lupa</button>
@@ -437,6 +591,22 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   </div>
   <div class="kanji-filter" id="kanji-filter"></div>
   <div class="kanji-grid" id="kanji-grid"></div>
+</div>
+
+<div class="page" id="page-leaderboard">
+  <div class="page-title">Leaderboard <span>🏆</span></div>
+  <div class="page-sub">Top pelajar berdasarkan XP. Semangat belajar!</div>
+  <div class="card">
+    <div class="lb-header">
+      <div class="lb-title-wrap">
+        <span style="font-size:13px;font-weight:700;color:var(--muted)">Top 20 · Semua Pengguna</span>
+      </div>
+      <button class="lb-refresh" onclick="loadLeaderboard()">↻ Refresh</button>
+    </div>
+    <div class="lb-list" id="lb-list">
+      <div class="lb-loading">Memuat leaderboard...</div>
+    </div>
+  </div>
 </div>
 
 </main>
@@ -878,13 +1048,18 @@ function updateStats() {
 }
 
 // ══════════════════════════════════════════════════
-// NAVIGATION
+// NAVIGATION with animation
 // ══════════════════════════════════════════════════
 function nav(pageId, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const current = document.querySelector('.page.active');
+  const next = document.getElementById('page-' + pageId);
+  if (current === next) return;
+  current.classList.remove('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + pageId).classList.add('active');
+  next.classList.add('active');
   if (el) el.classList.add('active');
+  // Trigger leaderboard load when navigating to it
+  if (pageId === 'leaderboard') loadLeaderboard();
 }
 
 // ══════════════════════════════════════════════════
@@ -908,8 +1083,15 @@ function buildKanaGrid(data, containerId, key, learnedArr) {
 function toggleKana(char, key, el) {
   const arr = key === 'H' ? learnedH : learnedK;
   const idx = arr.indexOf(char);
-  if (idx === -1) { arr.push(char); el.classList.add('learned'); userProgress.xp = (userProgress.xp || 0) + 5; }
-  else { arr.splice(idx, 1); el.classList.remove('learned'); }
+  if (idx === -1) {
+    arr.push(char); el.classList.add('learned');
+    userProgress.xp = (userProgress.xp || 0) + 5;
+    el.classList.remove('learned-pop');
+    void el.offsetWidth;
+    el.classList.add('learned-pop');
+  } else {
+    arr.splice(idx, 1); el.classList.remove('learned');
+  }
   updateStats(); scheduleSave();
 }
 
@@ -956,7 +1138,10 @@ function setFcCat(cat, el) {
 function loadFc() {
   fcFlipped = false;
   const c = fcCards[fcIndex];
+  const card = document.getElementById('fc-card');
+  card.classList.remove('flipped');
   document.getElementById('fc-kanji').textContent = c.jp;
+  document.getElementById('fc-kanji-back').textContent = c.jp;
   document.getElementById('fc-hiragana').textContent = c.h;
   document.getElementById('fc-katakana').textContent = c.k;
   document.getElementById('fc-romaji').textContent = c.r;
@@ -964,9 +1149,6 @@ function loadFc() {
   document.getElementById('fc-ex-jp').textContent = c.ex.jp;
   document.getElementById('fc-ex-rom').textContent = c.ex.h + ' / ' + c.ex.r;
   document.getElementById('fc-ex-id').textContent = c.ex.id;
-  ['fc-hiragana','fc-katakana','fc-romaji','fc-meaning','fc-example-block'].forEach(id =>
-    document.getElementById(id).style.display = 'none');
-  document.getElementById('fc-hint').style.display = 'block';
   document.getElementById('fc-btns').style.display = 'none';
   const catLabel = {kerja:'Kosakata Kerja',sehari:'Sehari-hari',angka:'Angka',percakapan:'Percakapan'}[fcCategory];
   document.getElementById('fc-prog').textContent = `Kartu ${fcIndex + 1} dari ${fcCards.length} — ${catLabel}`;
@@ -974,9 +1156,7 @@ function loadFc() {
 function flipCard() {
   if (fcFlipped) return;
   fcFlipped = true;
-  ['fc-hiragana','fc-katakana','fc-romaji','fc-meaning','fc-example-block'].forEach(id =>
-    document.getElementById(id).style.display = 'block');
-  document.getElementById('fc-hint').style.display = 'none';
+  document.getElementById('fc-card').classList.add('flipped');
   document.getElementById('fc-btns').style.display = 'flex';
 }
 function answer(score) {
@@ -985,8 +1165,21 @@ function answer(score) {
   if (score >= 2) userProgress.xp = (userProgress.xp || 0) + 10;
   else if (score === 1) userProgress.xp = (userProgress.xp || 0) + 3;
   updateStats(); scheduleSave();
-  fcIndex = (fcIndex + 1) % fcCards.length;
-  loadFc();
+  // XP burst visual
+  const xpEl = document.getElementById('xp-val');
+  xpEl.classList.remove('xp-burst');
+  void xpEl.offsetWidth;
+  xpEl.classList.add('xp-burst');
+  // Slide animation to next card
+  const card = document.getElementById('fc-card');
+  card.classList.add('slide-out');
+  setTimeout(() => {
+    fcIndex = (fcIndex + 1) % fcCards.length;
+    loadFc();
+    card.classList.remove('slide-out');
+    card.classList.add('slide-in');
+    setTimeout(() => card.classList.remove('slide-in'), 350);
+  }, 220);
 }
 
 // ══════════════════════════════════════════════════
