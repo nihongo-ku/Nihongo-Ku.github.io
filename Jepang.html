@@ -1128,6 +1128,7 @@ function closeModal(e) {
 // ══════════════════════════════════════════════════
 // INIT APP — HANYA SATU, DI PALING BAWAH
 // ══════════════════════════════════════════════════
+  
 let appInitialized = false;
 
 async function initApp(user) {
@@ -1169,38 +1170,27 @@ async function initApp(user) {
 }
 
 // ══════════════════════════════════════════════════
-// AUTH STATE LISTENER — WAJIB DI PALING BAWAH
+// AUTH STATE LISTENER
 // ══════════════════════════════════════════════════
-let appInitialized = false;
+sb.auth.onAuthStateChange(async (event, session) => {
+  console.log('Auth event:', event, 'User:', session?.user?.email);
 
-async function checkAndInit() {
-  try {
-    const { data: { session } } = await sb.auth.getSession();
+  // INITIAL_SESSION = dipanggil saat pertama load/refresh
+  // SIGNED_IN = dipanggil saat user baru login
+  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
     if (session?.user) {
+      if (appInitialized) return; // cegah double init
       appInitialized = true;
       await initApp(session.user);
     } else {
+      // INITIAL_SESSION tapi tidak ada sesi = belum login
       showScreen('auth');
     }
-  } catch (err) {
-    console.error('checkAndInit error:', err);
-    showScreen('auth');
-  }
-}
-
-// Jalankan langsung saat halaman load — fix blank saat refresh
-checkAndInit();
-
-// Listener untuk handle login/logout real-time
-sb.auth.onAuthStateChange(async (event, session) => {
-  console.log('Auth event:', event, 'User:', session?.user?.email);
-  if (event === 'SIGNED_IN' && !appInitialized) {
-    appInitialized = true;
-    await initApp(session.user);
   } else if (event === 'SIGNED_OUT') {
     appInitialized = false;
     showScreen('auth');
   }
+  // TOKEN_REFRESHED diabaikan — tidak perlu re-init
 });
 </script>
 </body>
