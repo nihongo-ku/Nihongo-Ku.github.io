@@ -6,11 +6,22 @@
 <title>Nihongo Belajar! | JLPT N5</title>
 <link rel="icon" href="nihongo-favicon.ico" type="image/x-icon">
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-  const SUPABASE_URL = 'https://tnaudvzkjzwugthzdanf.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRuYXVkdnpranp3dWd0aHpkYW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MzY0MjAsImV4cCI6MjA5MjAxMjQyMH0.uobUl68_EhIx0pZzs_LYQeIM6LA9Un9YJBZiZSAfmtI';
+firebase.initializeApp({
+  apiKey: "AIzaSyByPLREpI5MK5yVEUmBMIPnDax51mlqTm0",
+  authDomain: "nihongo-ku.firebaseapp.com",
+  projectId: "nihongo-ku",
+  storageBucket: "nihongo-ku.firebasestorage.app",
+  messagingSenderId: "1022545759889",
+  appId: "1:1022545759889:web:5e2a398ff9f7f5421f7930"
+});
+const auth = firebase.auth();
+const db = firebase.firestore();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Nunito:wght@400;600;700&display=swap');
@@ -25,7 +36,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .jp{font-family:'Noto Sans JP',sans-serif}
 
 /* AUTH */
-#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+#auth-screen{display:none;align-items:center;justify-content:center;min-height:100vh;padding:20px}
 .auth-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:100%;max-width:400px}
 .auth-logo{font-size:48px;font-family:'Noto Sans JP',sans-serif;color:var(--accent);text-align:center;margin-bottom:6px}
 .auth-subtitle{text-align:center;color:var(--muted);font-size:13px;margin-bottom:28px}
@@ -48,7 +59,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .btn-google:hover{border-color:var(--accent);background:rgba(108,143,255,.08)}
 
 /* LOADING */
-#loading-screen{display:none;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px}
+#loading-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px}
 .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -239,14 +250,14 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 </head>
 <body>
 
-<!-- LOADING -->
-<div id="loading-screen" style="display:flex">
+<!-- LOADING — ditampilkan saat halaman pertama kali dibuka -->
+<div id="loading-screen">
   <div class="spinner"></div>
   <div style="color:var(--muted);font-size:13px">Memuat aplikasi...</div>
 </div>
 
 <!-- AUTH -->
-<div id="auth-screen" style="display:none">
+<div id="auth-screen">
   <div class="auth-box">
     <div class="auth-logo">日本語</div>
     <div class="auth-subtitle">Belajar bahasa Jepang untuk kerja di Jepang</div>
@@ -362,13 +373,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
 <div class="page" id="page-hiragana">
   <div class="page-title">Hiragana <span>ひらがな</span></div>
-  <div class="page-sub">Klik huruf untuk tandai hafal. Hiragana = aksara asli Jepang, wajib dikuasai pertama.</div>
+  <div class="page-sub">Klik huruf untuk tandai hafal.</div>
   <div id="hiragana-grid"></div>
 </div>
 
 <div class="page" id="page-katakana">
   <div class="page-title">Katakana <span>カタカナ</span></div>
-  <div class="page-sub">Katakana untuk kata serapan asing. コーヒー (kōhī) = kopi, テレビ (terebi) = TV.</div>
+  <div class="page-sub">Katakana untuk kata serapan asing.</div>
   <div id="katakana-grid"></div>
 </div>
 
@@ -380,11 +391,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
 <div class="page" id="page-flashcard">
   <div class="page-title">Flashcard <span>SRS</span></div>
-  <div class="page-sub">Setiap kartu menampilkan kanji + hiragana + katakana + romaji. Klik kartu untuk buka arti.</div>
+  <div class="page-sub">Klik kartu untuk buka arti.</div>
   <div class="fc-cat-row" id="fc-cats"></div>
   <div class="fc-wrap">
     <div class="fc-prog" id="fc-prog">Kartu 1 dari 10</div>
-    <div class="fc-card" id="fc-card" onclick="flipCard()">
+    <div class="fc-card" onclick="flipCard()">
       <div class="fc-kanji jp" id="fc-kanji">会社</div>
       <div class="fc-hiragana" id="fc-hiragana" style="display:none"></div>
       <div class="fc-katakana" id="fc-katakana" style="display:none"></div>
@@ -408,19 +419,19 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
 <div class="page" id="page-grammar">
   <div class="page-title">Grammar <span>N5</span></div>
-  <div class="page-sub">Pola kalimat dasar dengan contoh hiragana + romaji + terjemahan.</div>
+  <div class="page-sub">Pola kalimat dasar dengan contoh.</div>
   <div id="grammar-list"></div>
 </div>
 
 <div class="page" id="page-quiz">
   <div class="page-title">Quiz Harian <span>N5</span></div>
-  <div class="page-sub">Setiap soal menampilkan kanji + furigana (hiragana kecil di atas).</div>
+  <div class="page-sub">Setiap soal menampilkan kanji + furigana.</div>
   <div id="quiz-area"></div>
 </div>
 
 <div class="page" id="page-kamus">
   <div class="page-title">Kamus Kanji <span>N5</span></div>
-  <div class="page-sub">103 kanji dasar N5. Klik kanji untuk detail lengkap. Cari berdasarkan arti atau karakter.</div>
+  <div class="page-sub">103 kanji dasar N5. Klik untuk detail lengkap.</div>
   <div class="kanji-search-row">
     <input class="kanji-search" id="kanji-search" placeholder="Cari kanji atau artinya..." oninput="filterKanji()">
   </div>
@@ -448,58 +459,55 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
 <script>
 // ══════════════════════════════════════════════════
-// SUPABASE INIT
+// STATE
 // ══════════════════════════════════════════════════
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null, userProgress = {};
 let learnedH = [], learnedK = [], learnedD = [], learnedVocab = {};
 let saveTimer = null;
+let fcCategory = 'kerja', fcCards = [], fcIndex = 0, fcFlipped = false;
+let quizIndex = 0, quizScore = 0, quizAnswered = false, quizQuestions = [];
+let kanjiFilter = 'semua', kanjiSearch = '';
 
 // ══════════════════════════════════════════════════
-// DATA — HIRAGANA & KATAKANA
+// DATA
 // ══════════════════════════════════════════════════
 const HIRAGANA = [
-  {row:'a', chars:[{jp:'あ',r:'a'},{jp:'い',r:'i'},{jp:'う',r:'u'},{jp:'え',r:'e'},{jp:'お',r:'o'}]},
-  {row:'k', chars:[{jp:'か',r:'ka'},{jp:'き',r:'ki'},{jp:'く',r:'ku'},{jp:'け',r:'ke'},{jp:'こ',r:'ko'}]},
-  {row:'s', chars:[{jp:'さ',r:'sa'},{jp:'し',r:'shi'},{jp:'す',r:'su'},{jp:'せ',r:'se'},{jp:'そ',r:'so'}]},
-  {row:'t', chars:[{jp:'た',r:'ta'},{jp:'ち',r:'chi'},{jp:'つ',r:'tsu'},{jp:'て',r:'te'},{jp:'と',r:'to'}]},
-  {row:'n', chars:[{jp:'な',r:'na'},{jp:'に',r:'ni'},{jp:'ぬ',r:'nu'},{jp:'ね',r:'ne'},{jp:'の',r:'no'}]},
-  {row:'h', chars:[{jp:'は',r:'ha'},{jp:'ひ',r:'hi'},{jp:'ふ',r:'fu'},{jp:'へ',r:'he'},{jp:'ほ',r:'ho'}]},
-  {row:'m', chars:[{jp:'ま',r:'ma'},{jp:'み',r:'mi'},{jp:'む',r:'mu'},{jp:'め',r:'me'},{jp:'も',r:'mo'}]},
-  {row:'y', chars:[{jp:'や',r:'ya'},{jp:'',r:''},{jp:'ゆ',r:'yu'},{jp:'',r:''},{jp:'よ',r:'yo'}]},
-  {row:'r', chars:[{jp:'ら',r:'ra'},{jp:'り',r:'ri'},{jp:'る',r:'ru'},{jp:'れ',r:'re'},{jp:'ろ',r:'ro'}]},
-  {row:'w', chars:[{jp:'わ',r:'wa'},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''},{jp:'を',r:'wo'}]},
-  {row:'ん', chars:[{jp:'ん',r:'n'},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''}]},
+  {row:'a',chars:[{jp:'あ',r:'a'},{jp:'い',r:'i'},{jp:'う',r:'u'},{jp:'え',r:'e'},{jp:'お',r:'o'}]},
+  {row:'k',chars:[{jp:'か',r:'ka'},{jp:'き',r:'ki'},{jp:'く',r:'ku'},{jp:'け',r:'ke'},{jp:'こ',r:'ko'}]},
+  {row:'s',chars:[{jp:'さ',r:'sa'},{jp:'し',r:'shi'},{jp:'す',r:'su'},{jp:'せ',r:'se'},{jp:'そ',r:'so'}]},
+  {row:'t',chars:[{jp:'た',r:'ta'},{jp:'ち',r:'chi'},{jp:'つ',r:'tsu'},{jp:'て',r:'te'},{jp:'と',r:'to'}]},
+  {row:'n',chars:[{jp:'な',r:'na'},{jp:'に',r:'ni'},{jp:'ぬ',r:'nu'},{jp:'ね',r:'ne'},{jp:'の',r:'no'}]},
+  {row:'h',chars:[{jp:'は',r:'ha'},{jp:'ひ',r:'hi'},{jp:'ふ',r:'fu'},{jp:'へ',r:'he'},{jp:'ほ',r:'ho'}]},
+  {row:'m',chars:[{jp:'ま',r:'ma'},{jp:'み',r:'mi'},{jp:'む',r:'mu'},{jp:'め',r:'me'},{jp:'も',r:'mo'}]},
+  {row:'y',chars:[{jp:'や',r:'ya'},{jp:'',r:''},{jp:'ゆ',r:'yu'},{jp:'',r:''},{jp:'よ',r:'yo'}]},
+  {row:'r',chars:[{jp:'ら',r:'ra'},{jp:'り',r:'ri'},{jp:'る',r:'ru'},{jp:'れ',r:'re'},{jp:'ろ',r:'ro'}]},
+  {row:'w',chars:[{jp:'わ',r:'wa'},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''},{jp:'を',r:'wo'}]},
+  {row:'ん',chars:[{jp:'ん',r:'n'},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''}]},
 ];
 const KATAKANA = [
-  {row:'a', chars:[{jp:'ア',r:'a'},{jp:'イ',r:'i'},{jp:'ウ',r:'u'},{jp:'エ',r:'e'},{jp:'オ',r:'o'}]},
-  {row:'k', chars:[{jp:'カ',r:'ka'},{jp:'キ',r:'ki'},{jp:'ク',r:'ku'},{jp:'ケ',r:'ke'},{jp:'コ',r:'ko'}]},
-  {row:'s', chars:[{jp:'サ',r:'sa'},{jp:'シ',r:'shi'},{jp:'ス',r:'su'},{jp:'セ',r:'se'},{jp:'ソ',r:'so'}]},
-  {row:'t', chars:[{jp:'タ',r:'ta'},{jp:'チ',r:'chi'},{jp:'ツ',r:'tsu'},{jp:'テ',r:'te'},{jp:'ト',r:'to'}]},
-  {row:'n', chars:[{jp:'ナ',r:'na'},{jp:'ニ',r:'ni'},{jp:'ヌ',r:'nu'},{jp:'ネ',r:'ne'},{jp:'ノ',r:'no'}]},
-  {row:'h', chars:[{jp:'ハ',r:'ha'},{jp:'ヒ',r:'hi'},{jp:'フ',r:'fu'},{jp:'ヘ',r:'he'},{jp:'ホ',r:'ho'}]},
-  {row:'m', chars:[{jp:'マ',r:'ma'},{jp:'ミ',r:'mi'},{jp:'ム',r:'mu'},{jp:'メ',r:'me'},{jp:'モ',r:'mo'}]},
-  {row:'y', chars:[{jp:'ヤ',r:'ya'},{jp:'',r:''},{jp:'ユ',r:'yu'},{jp:'',r:''},{jp:'ヨ',r:'yo'}]},
-  {row:'r', chars:[{jp:'ラ',r:'ra'},{jp:'リ',r:'ri'},{jp:'ル',r:'ru'},{jp:'レ',r:'re'},{jp:'ロ',r:'ro'}]},
-  {row:'w', chars:[{jp:'ワ',r:'wa'},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''},{jp:'ヲ',r:'wo'}]},
-  {row:'ン', chars:[{jp:'ン',r:'n'},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''}]},
+  {row:'a',chars:[{jp:'ア',r:'a'},{jp:'イ',r:'i'},{jp:'ウ',r:'u'},{jp:'エ',r:'e'},{jp:'オ',r:'o'}]},
+  {row:'k',chars:[{jp:'カ',r:'ka'},{jp:'キ',r:'ki'},{jp:'ク',r:'ku'},{jp:'ケ',r:'ke'},{jp:'コ',r:'ko'}]},
+  {row:'s',chars:[{jp:'サ',r:'sa'},{jp:'シ',r:'shi'},{jp:'ス',r:'su'},{jp:'セ',r:'se'},{jp:'ソ',r:'so'}]},
+  {row:'t',chars:[{jp:'タ',r:'ta'},{jp:'チ',r:'chi'},{jp:'ツ',r:'tsu'},{jp:'テ',r:'te'},{jp:'ト',r:'to'}]},
+  {row:'n',chars:[{jp:'ナ',r:'na'},{jp:'ニ',r:'ni'},{jp:'ヌ',r:'nu'},{jp:'ネ',r:'ne'},{jp:'ノ',r:'no'}]},
+  {row:'h',chars:[{jp:'ハ',r:'ha'},{jp:'ヒ',r:'hi'},{jp:'フ',r:'fu'},{jp:'ヘ',r:'he'},{jp:'ホ',r:'ho'}]},
+  {row:'m',chars:[{jp:'マ',r:'ma'},{jp:'ミ',r:'mi'},{jp:'ム',r:'mu'},{jp:'メ',r:'me'},{jp:'モ',r:'mo'}]},
+  {row:'y',chars:[{jp:'ヤ',r:'ya'},{jp:'',r:''},{jp:'ユ',r:'yu'},{jp:'',r:''},{jp:'ヨ',r:'yo'}]},
+  {row:'r',chars:[{jp:'ラ',r:'ra'},{jp:'リ',r:'ri'},{jp:'ル',r:'ru'},{jp:'レ',r:'re'},{jp:'ロ',r:'ro'}]},
+  {row:'w',chars:[{jp:'ワ',r:'wa'},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''},{jp:'ヲ',r:'wo'}]},
+  {row:'ン',chars:[{jp:'ン',r:'n'},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''},{jp:'',r:''}]},
 ];
-
-// ══════════════════════════════════════════════════
-// DATA — DAKUON
-// ══════════════════════════════════════════════════
 const DAKUON_DATA = {
-  dakuon:{title:'Dakuon (濁音) — Suara Bersuara',desc:'Dakuon ditandai dengan tanda ゛(nigori/ten-ten) di kanan atas huruf. Mengubah huruf "keras" menjadi "bersuara". Contoh: か (ka) → が (ga)',items:[
+  dakuon:{title:'Dakuon (濁音) — Suara Bersuara',desc:'Dakuon ditandai dengan tanda ゛di kanan atas huruf. Contoh: か (ka) → が (ga)',items:[
     {jp:'が',r:'ga',from:'か'},{jp:'ぎ',r:'gi',from:'き'},{jp:'ぐ',r:'gu',from:'く'},{jp:'げ',r:'ge',from:'け'},{jp:'ご',r:'go',from:'こ'},
     {jp:'ざ',r:'za',from:'さ'},{jp:'じ',r:'ji',from:'し'},{jp:'ず',r:'zu',from:'す'},{jp:'ぜ',r:'ze',from:'せ'},{jp:'ぞ',r:'zo',from:'そ'},
     {jp:'だ',r:'da',from:'た'},{jp:'ぢ',r:'ji',from:'ち'},{jp:'づ',r:'zu',from:'つ'},{jp:'で',r:'de',from:'て'},{jp:'ど',r:'do',from:'と'},
     {jp:'ば',r:'ba',from:'は'},{jp:'び',r:'bi',from:'ひ'},{jp:'ぶ',r:'bu',from:'ふ'},{jp:'べ',r:'be',from:'へ'},{jp:'ぼ',r:'bo',from:'ほ'},
   ]},
-  handakuon:{title:'Handakuon (半濁音) — Suara Semi-bersuara',desc:'Handakuon ditandai dengan tanda ゜(maru) di kanan atas. Hanya ada pada baris は (ha). Menghasilkan bunyi "p".',items:[
+  handakuon:{title:'Handakuon (半濁音) — Suara Semi-bersuara',desc:'Ditandai dengan tanda ゜. Hanya ada pada baris は (ha).',items:[
     {jp:'ぱ',r:'pa',from:'は'},{jp:'ぴ',r:'pi',from:'ひ'},{jp:'ぷ',r:'pu',from:'ふ'},{jp:'ぺ',r:'pe',from:'へ'},{jp:'ぽ',r:'po',from:'ほ'},
   ]},
-  youon:{title:'Youon (拗音) — Suara Gabungan',desc:'Youon dibentuk dengan menggabungkan huruf baris "i" dengan や,ゆ,よ kecil. Dibaca sebagai satu suku kata.',items:[
+  youon:{title:'Youon (拗音) — Suara Gabungan',desc:'Gabungan huruf baris "i" dengan や,ゆ,よ kecil.',items:[
     {jp:'きゃ',r:'kya',from:'き+ゃ'},{jp:'きゅ',r:'kyu',from:'き+ゅ'},{jp:'きょ',r:'kyo',from:'き+ょ'},
     {jp:'しゃ',r:'sha',from:'し+ゃ'},{jp:'しゅ',r:'shu',from:'し+ゅ'},{jp:'しょ',r:'sho',from:'し+ょ'},
     {jp:'ちゃ',r:'cha',from:'ち+ゃ'},{jp:'ちゅ',r:'chu',from:'ち+ゅ'},{jp:'ちょ',r:'cho',from:'ち+ょ'},
@@ -513,10 +521,6 @@ const DAKUON_DATA = {
     {jp:'ぴゃ',r:'pya',from:'ぴ+ゃ'},{jp:'ぴゅ',r:'pyu',from:'ぴ+ゅ'},{jp:'ぴょ',r:'pyo',from:'ぴ+ょ'},
   ]}
 };
-
-// ══════════════════════════════════════════════════
-// DATA — VOCAB
-// ══════════════════════════════════════════════════
 const VOCAB = {
   kerja:[
     {jp:'会社',h:'かいしゃ',k:'カイシャ',r:'kaisha',id:'Perusahaan',ex:{jp:'会社で働きます。',h:'かいしゃではたらきます。',r:'Kaisha de hatarakimasu.',id:'Saya bekerja di perusahaan.'}},
@@ -525,13 +529,13 @@ const VOCAB = {
     {jp:'面接',h:'めんせつ',k:'メンセツ',r:'mensetsu',id:'Wawancara kerja',ex:{jp:'面接があります。',h:'めんせつがあります。',r:'Mensetsu ga arimasu.',id:'Ada wawancara kerja.'}},
     {jp:'給料',h:'きゅうりょう',k:'キュウリョウ',r:'kyūryō',id:'Gaji',ex:{jp:'給料をもらいます。',h:'きゅうりょうをもらいます。',r:'Kyūryō o moraimasu.',id:'Menerima gaji.'}},
     {jp:'残業',h:'ざんぎょう',k:'ザンギョウ',r:'zangyō',id:'Lembur',ex:{jp:'今日は残業です。',h:'きょうはざんぎょうです。',r:'Kyō wa zangyō desu.',id:'Hari ini lembur.'}},
-    {jp:'休み',h:'やすみ',k:'ヤスミ',r:'yasumi',id:'Hari libur / istirahat',ex:{jp:'明日は休みです。',h:'あしたはやすみです。',r:'Ashita wa yasumi desu.',id:'Besok libur.'}},
+    {jp:'休み',h:'やすみ',k:'ヤスミ',r:'yasumi',id:'Hari libur',ex:{jp:'明日は休みです。',h:'あしたはやすみです。',r:'Ashita wa yasumi desu.',id:'Besok libur.'}},
     {jp:'同僚',h:'どうりょう',k:'ドウリョウ',r:'dōryō',id:'Rekan kerja',ex:{jp:'同僚と話します。',h:'どうりょうとはなします。',r:'Dōryō to hanashimasu.',id:'Bicara dengan rekan kerja.'}},
     {jp:'上司',h:'じょうし',k:'ジョウシ',r:'jōshi',id:'Atasan',ex:{jp:'上司に報告します。',h:'じょうしにほうこくします。',r:'Jōshi ni hōkoku shimasu.',id:'Lapor ke atasan.'}},
     {jp:'部長',h:'ぶちょう',k:'ブチョウ',r:'buchō',id:'Kepala divisi',ex:{jp:'部長は忙しいです。',h:'ぶちょうはいそがしいです。',r:'Buchō wa isogashii desu.',id:'Kepala divisi sibuk.'}},
     {jp:'出勤',h:'しゅっきん',k:'シュッキン',r:'shukkin',id:'Masuk kerja',ex:{jp:'八時に出勤します。',h:'はちじにしゅっきんします。',r:'Hachiji ni shukkin shimasu.',id:'Masuk kerja jam 8.'}},
     {jp:'退勤',h:'たいきん',k:'タイキン',r:'taikin',id:'Pulang kerja',ex:{jp:'六時に退勤します。',h:'ろくじにたいきんします。',r:'Rokuji ni taikin shimasu.',id:'Pulang kerja jam 6.'}},
-    {jp:'研修',h:'けんしゅう',k:'ケンシュウ',r:'kenshū',id:'Pelatihan / training',ex:{jp:'研修を受けます。',h:'けんしゅうをうけます。',r:'Kenshū o ukemasu.',id:'Mengikuti pelatihan.'}},
+    {jp:'研修',h:'けんしゅう',k:'ケンシュウ',r:'kenshū',id:'Pelatihan',ex:{jp:'研修を受けます。',h:'けんしゅうをうけます。',r:'Kenshū o ukemasu.',id:'Mengikuti pelatihan.'}},
     {jp:'工具',h:'こうぐ',k:'コウグ',r:'kōgu',id:'Alat kerja',ex:{jp:'工具を使います。',h:'こうぐをつかいます。',r:'Kōgu o tsukaimasu.',id:'Menggunakan alat kerja.'}},
     {jp:'制服',h:'せいふく',k:'セイフク',r:'seifuku',id:'Seragam',ex:{jp:'制服を着ます。',h:'せいふくをきます。',r:'Seifuku o kimasu.',id:'Memakai seragam.'}},
   ],
@@ -544,7 +548,7 @@ const VOCAB = {
     {jp:'行く',h:'いく',k:'イク',r:'iku',id:'Pergi',ex:{jp:'学校へ行きます。',h:'がっこうへいきます。',r:'Gakkō e ikimasu.',id:'Pergi ke sekolah.'}},
     {jp:'来る',h:'くる',k:'クル',r:'kuru',id:'Datang',ex:{jp:'友達が来ます。',h:'ともだちがきます。',r:'Tomodachi ga kimasu.',id:'Teman datang.'}},
     {jp:'見る',h:'みる',k:'ミル',r:'miru',id:'Melihat',ex:{jp:'テレビを見ます。',h:'テレビをみます。',r:'Terebi o mimasu.',id:'Menonton TV.'}},
-    {jp:'聞く',h:'きく',k:'キク',r:'kiku',id:'Mendengar / bertanya',ex:{jp:'音楽を聞きます。',h:'おんがくをききます。',r:'Ongaku o kikimasu.',id:'Mendengarkan musik.'}},
+    {jp:'聞く',h:'きく',k:'キク',r:'kiku',id:'Mendengar',ex:{jp:'音楽を聞きます。',h:'おんがくをききます。',r:'Ongaku o kikimasu.',id:'Mendengarkan musik.'}},
     {jp:'話す',h:'はなす',k:'ハナス',r:'hanasu',id:'Berbicara',ex:{jp:'日本語を話します。',h:'にほんごをはなします。',r:'Nihongo o hanashimasu.',id:'Berbicara bahasa Jepang.'}},
     {jp:'書く',h:'かく',k:'カク',r:'kaku',id:'Menulis',ex:{jp:'手紙を書きます。',h:'てがみをかきます。',r:'Tegami o kakimasu.',id:'Menulis surat.'}},
     {jp:'読む',h:'よむ',k:'ヨム',r:'yomu',id:'Membaca',ex:{jp:'本を読みます。',h:'ほんをよみます。',r:'Hon o yomimasu.',id:'Membaca buku.'}},
@@ -556,21 +560,21 @@ const VOCAB = {
     {jp:'一',h:'いち',k:'イチ',r:'ichi',id:'Satu (1)',ex:{jp:'一つあります。',h:'ひとつあります。',r:'Hitotsu arimasu.',id:'Ada satu.'}},
     {jp:'二',h:'に',k:'ニ',r:'ni',id:'Dua (2)',ex:{jp:'二人います。',h:'ふたりいます。',r:'Futari imasu.',id:'Ada dua orang.'}},
     {jp:'三',h:'さん',k:'サン',r:'san',id:'Tiga (3)',ex:{jp:'三時です。',h:'さんじです。',r:'Sanji desu.',id:'Jam 3.'}},
-    {jp:'四',h:'し・よん',k:'シ・ヨン',r:'shi / yon',id:'Empat (4)',ex:{jp:'四月です。',h:'しがつです。',r:'Shigatsu desu.',id:'Bulan April.'}},
+    {jp:'四',h:'し・よん',k:'シ・ヨン',r:'shi/yon',id:'Empat (4)',ex:{jp:'四月です。',h:'しがつです。',r:'Shigatsu desu.',id:'Bulan April.'}},
     {jp:'五',h:'ご',k:'ゴ',r:'go',id:'Lima (5)',ex:{jp:'五分後です。',h:'ごふんごです。',r:'Gofun go desu.',id:'5 menit lagi.'}},
     {jp:'六',h:'ろく',k:'ロク',r:'roku',id:'Enam (6)',ex:{jp:'六時です。',h:'ろくじです。',r:'Rokuji desu.',id:'Jam 6.'}},
-    {jp:'七',h:'なな・しち',k:'ナナ・シチ',r:'nana / shichi',id:'Tujuh (7)',ex:{jp:'七月です。',h:'しちがつです。',r:'Shichigatsu desu.',id:'Bulan Juli.'}},
+    {jp:'七',h:'なな・しち',k:'ナナ・シチ',r:'nana/shichi',id:'Tujuh (7)',ex:{jp:'七月です。',h:'しちがつです。',r:'Shichigatsu desu.',id:'Bulan Juli.'}},
     {jp:'八',h:'はち',k:'ハチ',r:'hachi',id:'Delapan (8)',ex:{jp:'八時です。',h:'はちじです。',r:'Hachiji desu.',id:'Jam 8.'}},
-    {jp:'九',h:'きゅう・く',k:'キュウ・ク',r:'kyū / ku',id:'Sembilan (9)',ex:{jp:'九月です。',h:'くがつです。',r:'Kugatsu desu.',id:'Bulan September.'}},
+    {jp:'九',h:'きゅう・く',k:'キュウ・ク',r:'kyū/ku',id:'Sembilan (9)',ex:{jp:'九月です。',h:'くがつです。',r:'Kugatsu desu.',id:'Bulan September.'}},
     {jp:'十',h:'じゅう',k:'ジュウ',r:'jū',id:'Sepuluh (10)',ex:{jp:'十円です。',h:'じゅうえんです。',r:'Jūen desu.',id:'10 yen.'}},
     {jp:'百',h:'ひゃく',k:'ヒャク',r:'hyaku',id:'Seratus (100)',ex:{jp:'百円です。',h:'ひゃくえんです。',r:'Hyakuen desu.',id:'100 yen.'}},
     {jp:'千',h:'せん',k:'セン',r:'sen',id:'Seribu (1000)',ex:{jp:'千円です。',h:'せんえんです。',r:'Senen desu.',id:'1000 yen.'}},
-    {jp:'万',h:'まん',k:'マン',r:'man',id:'Sepuluh ribu (10.000)',ex:{jp:'一万円です。',h:'いちまんえんです。',r:'Ichiman-en desu.',id:'10.000 yen.'}},
-    {jp:'零',h:'れい・ゼロ',k:'レイ・ゼロ',r:'rei / zero',id:'Nol (0)',ex:{jp:'零点です。',h:'れいてんです。',r:'Reiten desu.',id:'Nilai nol.'}},
-    {jp:'何',h:'なに・なん',k:'ナニ・ナン',r:'nani / nan',id:'Apa / Berapa',ex:{jp:'何時ですか。',h:'なんじですか。',r:'Nanji desu ka.',id:'Jam berapa?'}},
+    {jp:'万',h:'まん',k:'マン',r:'man',id:'Sepuluh ribu',ex:{jp:'一万円です。',h:'いちまんえんです。',r:'Ichiman-en desu.',id:'10.000 yen.'}},
+    {jp:'零',h:'れい・ゼロ',k:'レイ・ゼロ',r:'rei/zero',id:'Nol (0)',ex:{jp:'零点です。',h:'れいてんです。',r:'Reiten desu.',id:'Nilai nol.'}},
+    {jp:'何',h:'なに・なん',k:'ナニ・ナン',r:'nani/nan',id:'Apa / Berapa',ex:{jp:'何時ですか。',h:'なんじですか。',r:'Nanji desu ka.',id:'Jam berapa?'}},
   ],
   percakapan:[
-    {jp:'ありがとう',h:'ありがとう',k:'アリガトウ',r:'arigatō',id:'Terima kasih',ex:{jp:'ありがとうございます。',h:'ありがとうございます。',r:'Arigatō gozaimasu.',id:'Terima kasih banyak (sopan).'}},
+    {jp:'ありがとう',h:'ありがとう',k:'アリガトウ',r:'arigatō',id:'Terima kasih',ex:{jp:'ありがとうございます。',h:'ありがとうございます。',r:'Arigatō gozaimasu.',id:'Terima kasih banyak.'}},
     {jp:'すみません',h:'すみません',k:'スミマセン',r:'sumimasen',id:'Permisi / Maaf',ex:{jp:'すみません、どこですか。',h:'すみません、どこですか。',r:'Sumimasen, doko desu ka.',id:'Permisi, di mana?'}},
     {jp:'はじめまして',h:'はじめまして',k:'ハジメマシテ',r:'hajimemashite',id:'Salam kenal',ex:{jp:'はじめまして、田中です。',h:'はじめまして、たなかです。',r:'Hajimemashite, Tanaka desu.',id:'Salam kenal, saya Tanaka.'}},
     {jp:'よろしく',h:'よろしく',k:'ヨロシク',r:'yoroshiku',id:'Mohon bimbingan',ex:{jp:'よろしくお願いします。',h:'よろしくおねがいします。',r:'Yoroshiku onegaishimasu.',id:'Mohon bimbingannya.'}},
@@ -578,142 +582,130 @@ const VOCAB = {
     {jp:'おはよう',h:'おはよう',k:'オハヨウ',r:'ohayō',id:'Selamat pagi',ex:{jp:'おはようございます。',h:'おはようございます。',r:'Ohayō gozaimasu.',id:'Selamat pagi (sopan).'}},
     {jp:'こんにちは',h:'こんにちは',k:'コンニチハ',r:'konnichiwa',id:'Selamat siang/halo',ex:{jp:'こんにちは！元気ですか。',h:'こんにちは！げんきですか。',r:'Konnichiwa! Genki desu ka.',id:'Halo! Apa kabar?'}},
     {jp:'さようなら',h:'さようなら',k:'サヨウナラ',r:'sayōnara',id:'Selamat tinggal',ex:{jp:'では、さようなら。',h:'では、さようなら。',r:'Dewa, sayōnara.',id:'Kalau begitu, sampai jumpa.'}},
-    {jp:'お疲れ様',h:'おつかれさま',k:'オツカレサマ',r:'otsukaresama',id:'Terima kasih sudah bekerja keras',ex:{jp:'お疲れ様でした。',h:'おつかれさまでした。',r:'Otsukaresama deshita.',id:'Terima kasih sudah bekerja keras (akhir kerja).'}},
-    {jp:'いただきます',h:'いただきます',k:'イタダキマス',r:'itadakimasu',id:'Sebelum makan',ex:{jp:'いただきます！',h:'いただきます！',r:'Itadakimasu!',id:'Selamat makan! (sebelum makan)'}},
+    {jp:'お疲れ様',h:'おつかれさま',k:'オツカレサマ',r:'otsukaresama',id:'Terima kasih sudah bekerja keras',ex:{jp:'お疲れ様でした。',h:'おつかれさまでした。',r:'Otsukaresama deshita.',id:'Terima kasih sudah bekerja keras.'}},
+    {jp:'いただきます',h:'いただきます',k:'イタダキマス',r:'itadakimasu',id:'Sebelum makan',ex:{jp:'いただきます！',h:'いただきます！',r:'Itadakimasu!',id:'Selamat makan!'}},
   ],
 };
-
-// ══════════════════════════════════════════════════
-// DATA — KANJI N5
-// ══════════════════════════════════════════════════
 const KANJI_LIST = [
   {k:'日',m:'Matahari / Hari',on:'ニチ・ジツ',kun:'ひ・か',s:4,cat:'waktu',ex:[{w:'日本',r:'にほん',t:'Jepang'},{w:'今日',r:'きょう',t:'Hari ini'},{w:'日曜日',r:'にちようび',t:'Minggu'}]},
-  {k:'月',m:'Bulan / Senin',on:'ゲツ・ガツ',kun:'つき',s:4,cat:'waktu',ex:[{w:'月曜日',r:'げつようび',t:'Senin'},{w:'一月',r:'いちがつ',t:'Januari'},{w:'月',r:'つき',t:'Bulan (benda langit)'}]},
+  {k:'月',m:'Bulan / Senin',on:'ゲツ・ガツ',kun:'つき',s:4,cat:'waktu',ex:[{w:'月曜日',r:'げつようび',t:'Senin'},{w:'一月',r:'いちがつ',t:'Januari'}]},
   {k:'火',m:'Api / Selasa',on:'カ',kun:'ひ',s:4,cat:'alam',ex:[{w:'火曜日',r:'かようび',t:'Selasa'},{w:'火事',r:'かじ',t:'Kebakaran'}]},
   {k:'水',m:'Air / Rabu',on:'スイ',kun:'みず',s:4,cat:'alam',ex:[{w:'水曜日',r:'すいようび',t:'Rabu'},{w:'水',r:'みず',t:'Air'}]},
   {k:'木',m:'Pohon / Kamis',on:'モク・ボク',kun:'き',s:4,cat:'alam',ex:[{w:'木曜日',r:'もくようび',t:'Kamis'},{w:'木',r:'き',t:'Pohon'}]},
   {k:'金',m:'Emas / Uang / Jumat',on:'キン・コン',kun:'かね',s:8,cat:'benda',ex:[{w:'金曜日',r:'きんようび',t:'Jumat'},{w:'お金',r:'おかね',t:'Uang'}]},
   {k:'土',m:'Tanah / Sabtu',on:'ド・ト',kun:'つち',s:3,cat:'alam',ex:[{w:'土曜日',r:'どようび',t:'Sabtu'},{w:'土地',r:'とち',t:'Tanah'}]},
   {k:'山',m:'Gunung',on:'サン',kun:'やま',s:3,cat:'alam',ex:[{w:'山',r:'やま',t:'Gunung'},{w:'富士山',r:'ふじさん',t:'Gunung Fuji'}]},
-  {k:'川',m:'Sungai',on:'セン',kun:'かわ',s:3,cat:'alam',ex:[{w:'川',r:'かわ',t:'Sungai'},{w:'川口',r:'かわぐち',t:'Kawaguchi'}]},
+  {k:'川',m:'Sungai',on:'セン',kun:'かわ',s:3,cat:'alam',ex:[{w:'川',r:'かわ',t:'Sungai'}]},
   {k:'田',m:'Sawah',on:'デン',kun:'た',s:5,cat:'alam',ex:[{w:'田んぼ',r:'たんぼ',t:'Sawah'},{w:'田中',r:'たなか',t:'Tanaka'}]},
-  {k:'人',m:'Orang / Manusia',on:'ジン・ニン',kun:'ひと',s:2,cat:'orang',ex:[{w:'人',r:'ひと',t:'Orang'},{w:'日本人',r:'にほんじん',t:'Orang Jepang'},{w:'三人',r:'さんにん',t:'Tiga orang'}]},
+  {k:'人',m:'Orang / Manusia',on:'ジン・ニン',kun:'ひと',s:2,cat:'orang',ex:[{w:'人',r:'ひと',t:'Orang'},{w:'日本人',r:'にほんじん',t:'Orang Jepang'}]},
   {k:'口',m:'Mulut',on:'コウ・ク',kun:'くち',s:3,cat:'tubuh',ex:[{w:'口',r:'くち',t:'Mulut'},{w:'入口',r:'いりぐち',t:'Pintu masuk'},{w:'出口',r:'でぐち',t:'Pintu keluar'}]},
   {k:'目',m:'Mata',on:'モク・ボク',kun:'め',s:5,cat:'tubuh',ex:[{w:'目',r:'め',t:'Mata'},{w:'目的',r:'もくてき',t:'Tujuan'}]},
-  {k:'耳',m:'Telinga',on:'ジ',kun:'みみ',s:6,cat:'tubuh',ex:[{w:'耳',r:'みみ',t:'Telinga'},{w:'耳鼻科',r:'じびか',t:'THT'}]},
+  {k:'耳',m:'Telinga',on:'ジ',kun:'みみ',s:6,cat:'tubuh',ex:[{w:'耳',r:'みみ',t:'Telinga'}]},
   {k:'手',m:'Tangan',on:'シュ',kun:'て',s:4,cat:'tubuh',ex:[{w:'手',r:'て',t:'Tangan'},{w:'手紙',r:'てがみ',t:'Surat'},{w:'上手',r:'じょうず',t:'Pandai'}]},
-  {k:'足',m:'Kaki',on:'ソク',kun:'あし',s:7,cat:'tubuh',ex:[{w:'足',r:'あし',t:'Kaki'},{w:'足りない',r:'たりない',t:'Tidak cukup'}]},
+  {k:'足',m:'Kaki',on:'ソク',kun:'あし',s:7,cat:'tubuh',ex:[{w:'足',r:'あし',t:'Kaki'}]},
   {k:'大',m:'Besar',on:'ダイ・タイ',kun:'おお',s:3,cat:'sifat',ex:[{w:'大きい',r:'おおきい',t:'Besar'},{w:'大学',r:'だいがく',t:'Universitas'},{w:'大丈夫',r:'だいじょうぶ',t:'Tidak apa-apa'}]},
   {k:'小',m:'Kecil',on:'ショウ',kun:'ちい・こ',s:3,cat:'sifat',ex:[{w:'小さい',r:'ちいさい',t:'Kecil'},{w:'小学校',r:'しょうがっこう',t:'Sekolah dasar'}]},
-  {k:'上',m:'Atas',on:'ジョウ・ショウ',kun:'うえ・かみ',s:3,cat:'posisi',ex:[{w:'上',r:'うえ',t:'Atas'},{w:'上手',r:'じょうず',t:'Pandai'},{w:'以上',r:'いじょう',t:'Lebih dari'}]},
-  {k:'下',m:'Bawah',on:'カ・ゲ',kun:'した・しも',s:3,cat:'posisi',ex:[{w:'下',r:'した',t:'Bawah'},{w:'地下',r:'ちか',t:'Bawah tanah'},{w:'以下',r:'いか',t:'Kurang dari'}]},
-  {k:'中',m:'Tengah / Dalam',on:'チュウ',kun:'なか',s:4,cat:'posisi',ex:[{w:'中',r:'なか',t:'Di dalam'},{w:'中国',r:'ちゅうごく',t:'China'},{w:'中学校',r:'ちゅうがっこう',t:'SMP'}]},
-  {k:'本',m:'Buku / Asal / Batang',on:'ホン',kun:'もと',s:5,cat:'benda',ex:[{w:'本',r:'ほん',t:'Buku'},{w:'日本',r:'にほん',t:'Jepang'},{w:'本当',r:'ほんとう',t:'Sungguh-sungguh'}]},
-  {k:'国',m:'Negara',on:'コク',kun:'くに',s:8,cat:'tempat',ex:[{w:'国',r:'くに',t:'Negara'},{w:'外国',r:'がいこく',t:'Negara asing'},{w:'国際',r:'こくさい',t:'Internasional'}]},
-  {k:'年',m:'Tahun',on:'ネン',kun:'とし',s:6,cat:'waktu',ex:[{w:'今年',r:'ことし',t:'Tahun ini'},{w:'来年',r:'らいねん',t:'Tahun depan'},{w:'毎年',r:'まいとし',t:'Setiap tahun'}]},
-  {k:'時',m:'Waktu / Jam',on:'ジ',kun:'とき',s:10,cat:'waktu',ex:[{w:'時間',r:'じかん',t:'Waktu'},{w:'何時',r:'なんじ',t:'Jam berapa'},{w:'時々',r:'ときどき',t:'Kadang-kadang'}]},
-  {k:'分',m:'Menit / Bagian / Mengerti',on:'フン・ブン',kun:'わ',s:4,cat:'waktu',ex:[{w:'五分',r:'ごふん',t:'5 menit'},{w:'自分',r:'じぶん',t:'Diri sendiri'},{w:'半分',r:'はんぶん',t:'Setengah'}]},
-  {k:'何',m:'Apa / Berapa',on:'カ',kun:'なに・なん',s:7,cat:'tanya',ex:[{w:'何',r:'なに',t:'Apa'},{w:'何人',r:'なんにん',t:'Berapa orang'},{w:'何時',r:'なんじ',t:'Jam berapa'}]},
-  {k:'今',m:'Sekarang / Kini',on:'コン・キン',kun:'いま',s:4,cat:'waktu',ex:[{w:'今',r:'いま',t:'Sekarang'},{w:'今日',r:'きょう',t:'Hari ini'},{w:'今週',r:'こんしゅう',t:'Minggu ini'}]},
-  {k:'前',m:'Depan / Sebelum',on:'ゼン',kun:'まえ',s:9,cat:'posisi',ex:[{w:'前',r:'まえ',t:'Depan / Sebelum'},{w:'名前',r:'なまえ',t:'Nama'},{w:'午前',r:'ごぜん',t:'Pagi / AM'}]},
-  {k:'後',m:'Belakang / Setelah',on:'ゴ・コウ',kun:'あと・うし',s:9,cat:'posisi',ex:[{w:'後ろ',r:'うしろ',t:'Belakang'},{w:'午後',r:'ごご',t:'Siang / PM'},{w:'最後',r:'さいご',t:'Terakhir'}]},
-  {k:'右',m:'Kanan',on:'ウ・ユウ',kun:'みぎ',s:5,cat:'posisi',ex:[{w:'右',r:'みぎ',t:'Kanan'},{w:'右手',r:'みぎて',t:'Tangan kanan'}]},
-  {k:'左',m:'Kiri',on:'サ',kun:'ひだり',s:5,cat:'posisi',ex:[{w:'左',r:'ひだり',t:'Kiri'},{w:'左手',r:'ひだりて',t:'Tangan kiri'}]},
-  {k:'学',m:'Belajar / Ilmu',on:'ガク',kun:'まな',s:8,cat:'pendidikan',ex:[{w:'学校',r:'がっこう',t:'Sekolah'},{w:'大学',r:'だいがく',t:'Universitas'},{w:'学生',r:'がくせい',t:'Murid/Mahasiswa'}]},
-  {k:'校',m:'Sekolah',on:'コウ',kun:'-',s:10,cat:'pendidikan',ex:[{w:'学校',r:'がっこう',t:'Sekolah'},{w:'高校',r:'こうこう',t:'SMA'},{w:'校長',r:'こうちょう',t:'Kepala sekolah'}]},
-  {k:'先',m:'Dahulu / Ujung / Guru',on:'セン',kun:'さき',s:6,cat:'pendidikan',ex:[{w:'先生',r:'せんせい',t:'Guru'},{w:'先週',r:'せんしゅう',t:'Minggu lalu'},{w:'先月',r:'せんげつ',t:'Bulan lalu'}]},
-  {k:'生',m:'Hidup / Lahir / Murid',on:'セイ・ショウ',kun:'い・う・は',s:5,cat:'orang',ex:[{w:'学生',r:'がくせい',t:'Murid'},{w:'先生',r:'せんせい',t:'Guru'},{w:'生活',r:'せいかつ',t:'Kehidupan'}]},
-  {k:'語',m:'Bahasa / Kata',on:'ゴ',kun:'かた',s:14,cat:'pendidikan',ex:[{w:'日本語',r:'にほんご',t:'Bahasa Jepang'},{w:'英語',r:'えいご',t:'Bahasa Inggris'},{w:'言語',r:'げんご',t:'Bahasa'}]},
-  {k:'文',m:'Kalimat / Tulisan',on:'ブン・モン',kun:'ふみ',s:4,cat:'pendidikan',ex:[{w:'文字',r:'もじ',t:'Huruf/Karakter'},{w:'作文',r:'さくぶん',t:'Karangan'},{w:'文化',r:'ぶんか',t:'Kebudayaan'}]},
-  {k:'字',m:'Huruf / Karakter',on:'ジ',kun:'あざ',s:6,cat:'pendidikan',ex:[{w:'文字',r:'もじ',t:'Huruf'},{w:'漢字',r:'かんじ',t:'Kanji'},{w:'字幕',r:'じまく',t:'Subtitle'}]},
+  {k:'上',m:'Atas',on:'ジョウ・ショウ',kun:'うえ・かみ',s:3,cat:'posisi',ex:[{w:'上',r:'うえ',t:'Atas'},{w:'上手',r:'じょうず',t:'Pandai'}]},
+  {k:'下',m:'Bawah',on:'カ・ゲ',kun:'した・しも',s:3,cat:'posisi',ex:[{w:'下',r:'した',t:'Bawah'},{w:'地下',r:'ちか',t:'Bawah tanah'}]},
+  {k:'中',m:'Tengah / Dalam',on:'チュウ',kun:'なか',s:4,cat:'posisi',ex:[{w:'中',r:'なか',t:'Di dalam'},{w:'中国',r:'ちゅうごく',t:'China'}]},
+  {k:'本',m:'Buku / Asal',on:'ホン',kun:'もと',s:5,cat:'benda',ex:[{w:'本',r:'ほん',t:'Buku'},{w:'日本',r:'にほん',t:'Jepang'},{w:'本当',r:'ほんとう',t:'Sungguh-sungguh'}]},
+  {k:'国',m:'Negara',on:'コク',kun:'くに',s:8,cat:'tempat',ex:[{w:'国',r:'くに',t:'Negara'},{w:'外国',r:'がいこく',t:'Negara asing'}]},
+  {k:'年',m:'Tahun',on:'ネン',kun:'とし',s:6,cat:'waktu',ex:[{w:'今年',r:'ことし',t:'Tahun ini'},{w:'来年',r:'らいねん',t:'Tahun depan'}]},
+  {k:'時',m:'Waktu / Jam',on:'ジ',kun:'とき',s:10,cat:'waktu',ex:[{w:'時間',r:'じかん',t:'Waktu'},{w:'何時',r:'なんじ',t:'Jam berapa'}]},
+  {k:'分',m:'Menit / Mengerti',on:'フン・ブン',kun:'わ',s:4,cat:'waktu',ex:[{w:'五分',r:'ごふん',t:'5 menit'},{w:'自分',r:'じぶん',t:'Diri sendiri'}]},
+  {k:'何',m:'Apa / Berapa',on:'カ',kun:'なに・なん',s:7,cat:'tanya',ex:[{w:'何',r:'なに',t:'Apa'},{w:'何時',r:'なんじ',t:'Jam berapa'}]},
+  {k:'今',m:'Sekarang',on:'コン・キン',kun:'いま',s:4,cat:'waktu',ex:[{w:'今',r:'いま',t:'Sekarang'},{w:'今日',r:'きょう',t:'Hari ini'}]},
+  {k:'前',m:'Depan / Sebelum',on:'ゼン',kun:'まえ',s:9,cat:'posisi',ex:[{w:'前',r:'まえ',t:'Depan'},{w:'名前',r:'なまえ',t:'Nama'}]},
+  {k:'後',m:'Belakang / Setelah',on:'ゴ・コウ',kun:'あと・うし',s:9,cat:'posisi',ex:[{w:'後ろ',r:'うしろ',t:'Belakang'},{w:'午後',r:'ごご',t:'Siang / PM'}]},
+  {k:'右',m:'Kanan',on:'ウ・ユウ',kun:'みぎ',s:5,cat:'posisi',ex:[{w:'右',r:'みぎ',t:'Kanan'}]},
+  {k:'左',m:'Kiri',on:'サ',kun:'ひだり',s:5,cat:'posisi',ex:[{w:'左',r:'ひだり',t:'Kiri'}]},
+  {k:'学',m:'Belajar / Ilmu',on:'ガク',kun:'まな',s:8,cat:'pendidikan',ex:[{w:'学校',r:'がっこう',t:'Sekolah'},{w:'大学',r:'だいがく',t:'Universitas'}]},
+  {k:'校',m:'Sekolah',on:'コウ',kun:'-',s:10,cat:'pendidikan',ex:[{w:'学校',r:'がっこう',t:'Sekolah'},{w:'高校',r:'こうこう',t:'SMA'}]},
+  {k:'先',m:'Dahulu / Guru',on:'セン',kun:'さき',s:6,cat:'pendidikan',ex:[{w:'先生',r:'せんせい',t:'Guru'},{w:'先週',r:'せんしゅう',t:'Minggu lalu'}]},
+  {k:'生',m:'Hidup / Murid',on:'セイ・ショウ',kun:'い・う・は',s:5,cat:'orang',ex:[{w:'学生',r:'がくせい',t:'Murid'},{w:'先生',r:'せんせい',t:'Guru'}]},
+  {k:'語',m:'Bahasa / Kata',on:'ゴ',kun:'かた',s:14,cat:'pendidikan',ex:[{w:'日本語',r:'にほんご',t:'Bahasa Jepang'},{w:'英語',r:'えいご',t:'Bahasa Inggris'}]},
+  {k:'文',m:'Kalimat / Tulisan',on:'ブン・モン',kun:'ふみ',s:4,cat:'pendidikan',ex:[{w:'文字',r:'もじ',t:'Huruf'},{w:'文化',r:'ぶんか',t:'Kebudayaan'}]},
+  {k:'字',m:'Huruf / Karakter',on:'ジ',kun:'あざ',s:6,cat:'pendidikan',ex:[{w:'漢字',r:'かんじ',t:'Kanji'}]},
   {k:'読',m:'Membaca',on:'ドク・トク',kun:'よ',s:14,cat:'aksi',ex:[{w:'読む',r:'よむ',t:'Membaca'},{w:'読書',r:'どくしょ',t:'Membaca buku'}]},
-  {k:'書',m:'Menulis',on:'ショ',kun:'か',s:10,cat:'aksi',ex:[{w:'書く',r:'かく',t:'Menulis'},{w:'教科書',r:'きょうかしょ',t:'Buku teks'},{w:'辞書',r:'じしょ',t:'Kamus'}]},
+  {k:'書',m:'Menulis',on:'ショ',kun:'か',s:10,cat:'aksi',ex:[{w:'書く',r:'かく',t:'Menulis'},{w:'辞書',r:'じしょ',t:'Kamus'}]},
   {k:'話',m:'Berbicara / Cerita',on:'ワ',kun:'はな・はなし',s:13,cat:'aksi',ex:[{w:'話す',r:'はなす',t:'Berbicara'},{w:'電話',r:'でんわ',t:'Telepon'}]},
-  {k:'聞',m:'Mendengar / Bertanya',on:'ブン・モン',kun:'き',s:14,cat:'aksi',ex:[{w:'聞く',r:'きく',t:'Mendengar / bertanya'},{w:'新聞',r:'しんぶん',t:'Koran'}]},
-  {k:'見',m:'Melihat',on:'ケン',kun:'み',s:7,cat:'aksi',ex:[{w:'見る',r:'みる',t:'Melihat'},{w:'見せる',r:'みせる',t:'Memperlihatkan'},{w:'意見',r:'いけん',t:'Pendapat'}]},
-  {k:'食',m:'Makan / Makanan',on:'ショク',kun:'た・く',s:9,cat:'aksi',ex:[{w:'食べる',r:'たべる',t:'Makan'},{w:'食事',r:'しょくじ',t:'Makan'},{w:'食堂',r:'しょくどう',t:'Kafetaria'}]},
+  {k:'聞',m:'Mendengar / Bertanya',on:'ブン・モン',kun:'き',s:14,cat:'aksi',ex:[{w:'聞く',r:'きく',t:'Mendengar'},{w:'新聞',r:'しんぶん',t:'Koran'}]},
+  {k:'見',m:'Melihat',on:'ケン',kun:'み',s:7,cat:'aksi',ex:[{w:'見る',r:'みる',t:'Melihat'},{w:'意見',r:'いけん',t:'Pendapat'}]},
+  {k:'食',m:'Makan / Makanan',on:'ショク',kun:'た・く',s:9,cat:'aksi',ex:[{w:'食べる',r:'たべる',t:'Makan'},{w:'食堂',r:'しょくどう',t:'Kafetaria'}]},
   {k:'飲',m:'Minum',on:'イン',kun:'の',s:12,cat:'aksi',ex:[{w:'飲む',r:'のむ',t:'Minum'},{w:'飲み物',r:'のみもの',t:'Minuman'}]},
-  {k:'買',m:'Membeli',on:'バイ',kun:'か',s:12,cat:'aksi',ex:[{w:'買う',r:'かう',t:'Membeli'},{w:'買い物',r:'かいもの',t:'Belanja'},{w:'売買',r:'ばいばい',t:'Jual beli'}]},
-  {k:'来',m:'Datang',on:'ライ',kun:'く・き',s:7,cat:'aksi',ex:[{w:'来る',r:'くる',t:'Datang'},{w:'来年',r:'らいねん',t:'Tahun depan'},{w:'来週',r:'らいしゅう',t:'Minggu depan'}]},
-  {k:'行',m:'Pergi',on:'コウ・ギョウ',kun:'い・ゆ',s:6,cat:'aksi',ex:[{w:'行く',r:'いく',t:'Pergi'},{w:'旅行',r:'りょこう',t:'Perjalanan'},{w:'銀行',r:'ぎんこう',t:'Bank'}]},
-  {k:'出',m:'Keluar',on:'シュツ・スイ',kun:'で・だ',s:5,cat:'aksi',ex:[{w:'出る',r:'でる',t:'Keluar'},{w:'出口',r:'でぐち',t:'Pintu keluar'},{w:'出発',r:'しゅっぱつ',t:'Berangkat'}]},
-  {k:'入',m:'Masuk',on:'ニュウ',kun:'い・はい',s:2,cat:'aksi',ex:[{w:'入る',r:'はいる',t:'Masuk'},{w:'入口',r:'いりぐち',t:'Pintu masuk'},{w:'入学',r:'にゅうがく',t:'Masuk sekolah'}]},
+  {k:'買',m:'Membeli',on:'バイ',kun:'か',s:12,cat:'aksi',ex:[{w:'買う',r:'かう',t:'Membeli'},{w:'買い物',r:'かいもの',t:'Belanja'}]},
+  {k:'来',m:'Datang',on:'ライ',kun:'く・き',s:7,cat:'aksi',ex:[{w:'来る',r:'くる',t:'Datang'},{w:'来年',r:'らいねん',t:'Tahun depan'}]},
+  {k:'行',m:'Pergi',on:'コウ・ギョウ',kun:'い・ゆ',s:6,cat:'aksi',ex:[{w:'行く',r:'いく',t:'Pergi'},{w:'旅行',r:'りょこう',t:'Perjalanan'}]},
+  {k:'出',m:'Keluar',on:'シュツ・スイ',kun:'で・だ',s:5,cat:'aksi',ex:[{w:'出る',r:'でる',t:'Keluar'},{w:'出口',r:'でぐち',t:'Pintu keluar'}]},
+  {k:'入',m:'Masuk',on:'ニュウ',kun:'い・はい',s:2,cat:'aksi',ex:[{w:'入る',r:'はいる',t:'Masuk'},{w:'入口',r:'いりぐち',t:'Pintu masuk'}]},
   {k:'帰',m:'Pulang / Kembali',on:'キ',kun:'かえ',s:10,cat:'aksi',ex:[{w:'帰る',r:'かえる',t:'Pulang'},{w:'帰宅',r:'きたく',t:'Pulang ke rumah'}]},
-  {k:'起',m:'Bangun / Terjadi',on:'キ',kun:'お',s:10,cat:'aksi',ex:[{w:'起きる',r:'おきる',t:'Bangun'},{w:'起こる',r:'おこる',t:'Terjadi'}]},
-  {k:'寝',m:'Tidur',on:'シン',kun:'ね',s:13,cat:'aksi',ex:[{w:'寝る',r:'ねる',t:'Tidur'},{w:'寝室',r:'しんしつ',t:'Kamar tidur'}]},
-  {k:'立',m:'Berdiri',on:'リツ・リュウ',kun:'た',s:5,cat:'aksi',ex:[{w:'立つ',r:'たつ',t:'Berdiri'},{w:'立場',r:'たちば',t:'Posisi/sudut pandang'}]},
-  {k:'休',m:'Istirahat',on:'キュウ',kun:'やす',s:6,cat:'aksi',ex:[{w:'休む',r:'やすむ',t:'Beristirahat'},{w:'休日',r:'きゅうじつ',t:'Hari libur'},{w:'休憩',r:'きゅうけい',t:'Istirahat'}]},
-  {k:'働',m:'Bekerja',on:'ドウ',kun:'はたら',s:13,cat:'kerja',ex:[{w:'働く',r:'はたらく',t:'Bekerja'},{w:'労働',r:'ろうどう',t:'Tenaga kerja'}]},
+  {k:'起',m:'Bangun / Terjadi',on:'キ',kun:'お',s:10,cat:'aksi',ex:[{w:'起きる',r:'おきる',t:'Bangun'}]},
+  {k:'寝',m:'Tidur',on:'シン',kun:'ね',s:13,cat:'aksi',ex:[{w:'寝る',r:'ねる',t:'Tidur'}]},
+  {k:'立',m:'Berdiri',on:'リツ・リュウ',kun:'た',s:5,cat:'aksi',ex:[{w:'立つ',r:'たつ',t:'Berdiri'}]},
+  {k:'休',m:'Istirahat',on:'キュウ',kun:'やす',s:6,cat:'aksi',ex:[{w:'休む',r:'やすむ',t:'Beristirahat'},{w:'休日',r:'きゅうじつ',t:'Hari libur'}]},
+  {k:'働',m:'Bekerja',on:'ドウ',kun:'はたら',s:13,cat:'kerja',ex:[{w:'働く',r:'はたらく',t:'Bekerja'}]},
   {k:'会',m:'Bertemu / Pertemuan',on:'カイ・エ',kun:'あ',s:6,cat:'kerja',ex:[{w:'会う',r:'あう',t:'Bertemu'},{w:'会社',r:'かいしゃ',t:'Perusahaan'},{w:'会議',r:'かいぎ',t:'Rapat'}]},
-  {k:'社',m:'Perusahaan / Kuil Shinto',on:'シャ',kun:'やしろ',s:7,cat:'kerja',ex:[{w:'会社',r:'かいしゃ',t:'Perusahaan'},{w:'社員',r:'しゃいん',t:'Karyawan'},{w:'社長',r:'しゃちょう',t:'Direktur'}]},
-  {k:'員',m:'Anggota / Karyawan',on:'イン',kun:'-',s:10,cat:'orang',ex:[{w:'社員',r:'しゃいん',t:'Karyawan'},{w:'店員',r:'てんいん',t:'Pramuniaga'},{w:'全員',r:'ぜんいん',t:'Semua anggota'}]},
-  {k:'長',m:'Panjang / Pemimpin',on:'チョウ',kun:'なが',s:8,cat:'sifat',ex:[{w:'部長',r:'ぶちょう',t:'Kepala divisi'},{w:'長い',r:'ながい',t:'Panjang'},{w:'社長',r:'しゃちょう',t:'Direktur'}]},
-  {k:'新',m:'Baru',on:'シン',kun:'あたら・にい',s:13,cat:'sifat',ex:[{w:'新しい',r:'あたらしい',t:'Baru'},{w:'新幹線',r:'しんかんせん',t:'Shinkansen'},{w:'新聞',r:'しんぶん',t:'Koran'}]},
-  {k:'古',m:'Lama / Kuno',on:'コ',kun:'ふる',s:5,cat:'sifat',ex:[{w:'古い',r:'ふるい',t:'Lama/kuno'},{w:'古典',r:'こてん',t:'Klasik'}]},
-  {k:'高',m:'Tinggi / Mahal',on:'コウ',kun:'たか',s:10,cat:'sifat',ex:[{w:'高い',r:'たかい',t:'Tinggi / Mahal'},{w:'高校',r:'こうこう',t:'SMA'},{w:'最高',r:'さいこう',t:'Tertinggi / Terbaik'}]},
-  {k:'安',m:'Murah / Aman',on:'アン',kun:'やす',s:6,cat:'sifat',ex:[{w:'安い',r:'やすい',t:'Murah'},{w:'安全',r:'あんぜん',t:'Aman'},{w:'安心',r:'あんしん',t:'Tenang hati'}]},
+  {k:'社',m:'Perusahaan',on:'シャ',kun:'やしろ',s:7,cat:'kerja',ex:[{w:'会社',r:'かいしゃ',t:'Perusahaan'},{w:'社員',r:'しゃいん',t:'Karyawan'}]},
+  {k:'員',m:'Anggota / Karyawan',on:'イン',kun:'-',s:10,cat:'orang',ex:[{w:'社員',r:'しゃいん',t:'Karyawan'},{w:'店員',r:'てんいん',t:'Pramuniaga'}]},
+  {k:'長',m:'Panjang / Pemimpin',on:'チョウ',kun:'なが',s:8,cat:'sifat',ex:[{w:'部長',r:'ぶちょう',t:'Kepala divisi'},{w:'社長',r:'しゃちょう',t:'Direktur'}]},
+  {k:'新',m:'Baru',on:'シン',kun:'あたら・にい',s:13,cat:'sifat',ex:[{w:'新しい',r:'あたらしい',t:'Baru'},{w:'新聞',r:'しんぶん',t:'Koran'}]},
+  {k:'古',m:'Lama / Kuno',on:'コ',kun:'ふる',s:5,cat:'sifat',ex:[{w:'古い',r:'ふるい',t:'Lama/kuno'}]},
+  {k:'高',m:'Tinggi / Mahal',on:'コウ',kun:'たか',s:10,cat:'sifat',ex:[{w:'高い',r:'たかい',t:'Tinggi / Mahal'},{w:'高校',r:'こうこう',t:'SMA'}]},
+  {k:'安',m:'Murah / Aman',on:'アン',kun:'やす',s:6,cat:'sifat',ex:[{w:'安い',r:'やすい',t:'Murah'},{w:'安全',r:'あんぜん',t:'Aman'}]},
   {k:'多',m:'Banyak',on:'タ',kun:'おお',s:6,cat:'sifat',ex:[{w:'多い',r:'おおい',t:'Banyak'},{w:'多分',r:'たぶん',t:'Mungkin'}]},
-  {k:'少',m:'Sedikit',on:'ショウ',kun:'すく・すこ',s:4,cat:'sifat',ex:[{w:'少ない',r:'すくない',t:'Sedikit'},{w:'少し',r:'すこし',t:'Sedikit'},{w:'少年',r:'しょうねん',t:'Remaja laki-laki'}]},
-  {k:'好',m:'Suka / Baik',on:'コウ',kun:'す・この',s:6,cat:'sifat',ex:[{w:'好き',r:'すき',t:'Suka'},{w:'好物',r:'こうぶつ',t:'Makanan favorit'}]},
-  {k:'白',m:'Putih',on:'ハク・ビャク',kun:'しろ・しら',s:5,cat:'warna',ex:[{w:'白い',r:'しろい',t:'Putih'},{w:'白黒',r:'しろくろ',t:'Hitam putih'}]},
+  {k:'少',m:'Sedikit',on:'ショウ',kun:'すく・すこ',s:4,cat:'sifat',ex:[{w:'少ない',r:'すくない',t:'Sedikit'},{w:'少し',r:'すこし',t:'Sedikit'}]},
+  {k:'好',m:'Suka / Baik',on:'コウ',kun:'す・この',s:6,cat:'sifat',ex:[{w:'好き',r:'すき',t:'Suka'}]},
+  {k:'白',m:'Putih',on:'ハク・ビャク',kun:'しろ・しら',s:5,cat:'warna',ex:[{w:'白い',r:'しろい',t:'Putih'}]},
   {k:'黒',m:'Hitam',on:'コク',kun:'くろ',s:11,cat:'warna',ex:[{w:'黒い',r:'くろい',t:'Hitam'},{w:'黒板',r:'こくばん',t:'Papan tulis'}]},
-  {k:'赤',m:'Merah',on:'セキ・シャク',kun:'あか',s:7,cat:'warna',ex:[{w:'赤い',r:'あかい',t:'Merah'},{w:'赤ちゃん',r:'あかちゃん',t:'Bayi'}]},
-  {k:'青',m:'Biru / Hijau',on:'セイ・ショウ',kun:'あお',s:8,cat:'warna',ex:[{w:'青い',r:'あおい',t:'Biru'},{w:'青春',r:'せいしゅん',t:'Masa muda'}]},
-  {k:'車',m:'Mobil / Kendaraan',on:'シャ',kun:'くるま',s:7,cat:'transportasi',ex:[{w:'車',r:'くるま',t:'Mobil'},{w:'電車',r:'でんしゃ',t:'Kereta listrik'},{w:'自転車',r:'じてんしゃ',t:'Sepeda'}]},
-  {k:'電',m:'Listrik',on:'デン',kun:'-',s:13,cat:'teknologi',ex:[{w:'電話',r:'でんわ',t:'Telepon'},{w:'電車',r:'でんしゃ',t:'Kereta listrik'},{w:'電気',r:'でんき',t:'Listrik'}]},
+  {k:'赤',m:'Merah',on:'セキ・シャク',kun:'あか',s:7,cat:'warna',ex:[{w:'赤い',r:'あかい',t:'Merah'}]},
+  {k:'青',m:'Biru / Hijau',on:'セイ・ショウ',kun:'あお',s:8,cat:'warna',ex:[{w:'青い',r:'あおい',t:'Biru'}]},
+  {k:'車',m:'Mobil / Kendaraan',on:'シャ',kun:'くるま',s:7,cat:'transportasi',ex:[{w:'車',r:'くるま',t:'Mobil'},{w:'電車',r:'でんしゃ',t:'Kereta listrik'}]},
+  {k:'電',m:'Listrik',on:'デン',kun:'-',s:13,cat:'teknologi',ex:[{w:'電話',r:'でんわ',t:'Telepon'},{w:'電車',r:'でんしゃ',t:'Kereta listrik'}]},
   {k:'父',m:'Ayah',on:'フ',kun:'ちち',s:4,cat:'keluarga',ex:[{w:'父',r:'ちち',t:'Ayah (saya)'},{w:'お父さん',r:'おとうさん',t:'Ayah (sebutan)'}]},
   {k:'母',m:'Ibu',on:'ボ',kun:'はは',s:5,cat:'keluarga',ex:[{w:'母',r:'はは',t:'Ibu (saya)'},{w:'お母さん',r:'おかあさん',t:'Ibu (sebutan)'}]},
-  {k:'子',m:'Anak',on:'シ・ス',kun:'こ',s:3,cat:'keluarga',ex:[{w:'子供',r:'こども',t:'Anak-anak'},{w:'女子',r:'じょし',t:'Perempuan'},{w:'男子',r:'だんし',t:'Laki-laki'}]},
-  {k:'女',m:'Perempuan',on:'ジョ・ニョ',kun:'おんな・め',s:3,cat:'orang',ex:[{w:'女性',r:'じょせい',t:'Perempuan'},{w:'女子',r:'じょし',t:'Anak perempuan'},{w:'彼女',r:'かのじょ',t:'Dia (perempuan) / pacar'}]},
-  {k:'男',m:'Laki-laki',on:'ダン・ナン',kun:'おとこ',s:7,cat:'orang',ex:[{w:'男性',r:'だんせい',t:'Laki-laki'},{w:'男子',r:'だんし',t:'Anak laki-laki'}]},
-  {k:'友',m:'Teman / Sahabat',on:'ユウ',kun:'とも',s:4,cat:'orang',ex:[{w:'友達',r:'ともだち',t:'Teman'},{w:'友人',r:'ゆうじん',t:'Teman (formal)'},{w:'親友',r:'しんゆう',t:'Sahabat karib'}]},
-  {k:'私',m:'Saya / Pribadi',on:'シ',kun:'わたし・わたくし',s:7,cat:'orang',ex:[{w:'私',r:'わたし',t:'Saya'},{w:'私立',r:'しりつ',t:'Swasta'}]},
-  {k:'家',m:'Rumah / Keluarga',on:'カ・ケ',kun:'いえ・や',s:10,cat:'tempat',ex:[{w:'家',r:'いえ',t:'Rumah'},{w:'家族',r:'かぞく',t:'Keluarga'},{w:'帰宅',r:'きたく',t:'Pulang ke rumah'}]},
-  {k:'店',m:'Toko',on:'テン',kun:'みせ',s:8,cat:'tempat',ex:[{w:'店',r:'みせ',t:'Toko'},{w:'店員',r:'てんいん',t:'Pramuniaga'},{w:'食堂',r:'しょくどう',t:'Kafetaria'}]},
+  {k:'子',m:'Anak',on:'シ・ス',kun:'こ',s:3,cat:'keluarga',ex:[{w:'子供',r:'こども',t:'Anak-anak'}]},
+  {k:'女',m:'Perempuan',on:'ジョ・ニョ',kun:'おんな・め',s:3,cat:'orang',ex:[{w:'女性',r:'じょせい',t:'Perempuan'},{w:'彼女',r:'かのじょ',t:'Dia (perempuan)'}]},
+  {k:'男',m:'Laki-laki',on:'ダン・ナン',kun:'おとこ',s:7,cat:'orang',ex:[{w:'男性',r:'だんせい',t:'Laki-laki'}]},
+  {k:'友',m:'Teman / Sahabat',on:'ユウ',kun:'とも',s:4,cat:'orang',ex:[{w:'友達',r:'ともだち',t:'Teman'},{w:'親友',r:'しんゆう',t:'Sahabat karib'}]},
+  {k:'私',m:'Saya / Pribadi',on:'シ',kun:'わたし・わたくし',s:7,cat:'orang',ex:[{w:'私',r:'わたし',t:'Saya'}]},
+  {k:'家',m:'Rumah / Keluarga',on:'カ・ケ',kun:'いえ・や',s:10,cat:'tempat',ex:[{w:'家',r:'いえ',t:'Rumah'},{w:'家族',r:'かぞく',t:'Keluarga'}]},
+  {k:'店',m:'Toko',on:'テン',kun:'みせ',s:8,cat:'tempat',ex:[{w:'店',r:'みせ',t:'Toko'},{w:'店員',r:'てんいん',t:'Pramuniaga'}]},
   {k:'駅',m:'Stasiun',on:'エキ',kun:'-',s:14,cat:'tempat',ex:[{w:'駅',r:'えき',t:'Stasiun'},{w:'駅前',r:'えきまえ',t:'Depan stasiun'}]},
-  {k:'道',m:'Jalan',on:'ドウ・トウ',kun:'みち',s:12,cat:'tempat',ex:[{w:'道',r:'みち',t:'Jalan'},{w:'鉄道',r:'てつどう',t:'Kereta api'},{w:'道路',r:'どうろ',t:'Jalan raya'}]},
-  {k:'気',m:'Perasaan / Energi / Udara',on:'キ・ケ',kun:'-',s:6,cat:'abstrak',ex:[{w:'元気',r:'げんき',t:'Sehat / Bersemangat'},{w:'天気',r:'てんき',t:'Cuaca'},{w:'気持ち',r:'きもち',t:'Perasaan'}]},
+  {k:'道',m:'Jalan',on:'ドウ・トウ',kun:'みち',s:12,cat:'tempat',ex:[{w:'道',r:'みち',t:'Jalan'},{w:'道路',r:'どうろ',t:'Jalan raya'}]},
+  {k:'気',m:'Perasaan / Energi',on:'キ・ケ',kun:'-',s:6,cat:'abstrak',ex:[{w:'元気',r:'げんき',t:'Sehat / Bersemangat'},{w:'天気',r:'てんき',t:'Cuaca'}]},
   {k:'天',m:'Langit / Surga',on:'テン',kun:'あま・あめ',s:4,cat:'alam',ex:[{w:'天気',r:'てんき',t:'Cuaca'},{w:'天国',r:'てんごく',t:'Surga'}]},
-  {k:'花',m:'Bunga',on:'カ',kun:'はな',s:7,cat:'alam',ex:[{w:'花',r:'はな',t:'Bunga'},{w:'花見',r:'はなみ',t:'Melihat bunga sakura'},{w:'花火',r:'はなび',t:'Kembang api'}]},
-  {k:'魚',m:'Ikan',on:'ギョ',kun:'さかな・うお',s:11,cat:'makanan',ex:[{w:'魚',r:'さかな',t:'Ikan'},{w:'金魚',r:'きんぎょ',t:'Ikan mas'}]},
-  {k:'肉',m:'Daging',on:'ニク',kun:'-',s:6,cat:'makanan',ex:[{w:'肉',r:'にく',t:'Daging'},{w:'牛肉',r:'ぎゅうにく',t:'Daging sapi'},{w:'鶏肉',r:'とりにく',t:'Daging ayam'}]},
+  {k:'花',m:'Bunga',on:'カ',kun:'はな',s:7,cat:'alam',ex:[{w:'花',r:'はな',t:'Bunga'},{w:'花見',r:'はなみ',t:'Melihat bunga sakura'}]},
+  {k:'魚',m:'Ikan',on:'ギョ',kun:'さかな・うお',s:11,cat:'makanan',ex:[{w:'魚',r:'さかな',t:'Ikan'}]},
+  {k:'肉',m:'Daging',on:'ニク',kun:'-',s:6,cat:'makanan',ex:[{w:'肉',r:'にく',t:'Daging'},{w:'牛肉',r:'ぎゅうにく',t:'Daging sapi'}]},
   {k:'米',m:'Beras / Amerika',on:'マイ・ベイ',kun:'こめ',s:6,cat:'makanan',ex:[{w:'米',r:'こめ',t:'Beras'},{w:'米国',r:'べいこく',t:'Amerika'}]},
-  {k:'名',m:'Nama / Terkenal',on:'メイ・ミョウ',kun:'な',s:6,cat:'abstrak',ex:[{w:'名前',r:'なまえ',t:'Nama'},{w:'有名',r:'ゆうめい',t:'Terkenal'},{w:'名刺',r:'めいし',t:'Kartu nama'}]},
-  {k:'半',m:'Setengah',on:'ハン',kun:'-',s:5,cat:'angka',ex:[{w:'半分',r:'はんぶん',t:'Setengah'},{w:'一時半',r:'いちじはん',t:'Jam setengah dua'}]},
-  {k:'毎',m:'Setiap',on:'マイ',kun:'-',s:6,cat:'waktu',ex:[{w:'毎日',r:'まいにち',t:'Setiap hari'},{w:'毎週',r:'まいしゅう',t:'Setiap minggu'},{w:'毎年',r:'まいとし',t:'Setiap tahun'}]},
-  {k:'週',m:'Minggu',on:'シュウ',kun:'-',s:11,cat:'waktu',ex:[{w:'今週',r:'こんしゅう',t:'Minggu ini'},{w:'来週',r:'らいしゅう',t:'Minggu depan'},{w:'毎週',r:'まいしゅう',t:'Setiap minggu'}]},
-  {k:'間',m:'Antara / Selama',on:'カン・ケン',kun:'あいだ・ま',s:12,cat:'waktu',ex:[{w:'時間',r:'じかん',t:'Waktu'},{w:'間',r:'あいだ',t:'Antara'},{w:'人間',r:'にんげん',t:'Manusia'}]},
-  {k:'方',m:'Arah / Cara / Orang',on:'ホウ',kun:'かた',s:4,cat:'abstrak',ex:[{w:'方法',r:'ほうほう',t:'Cara/Metode'},{w:'一方',r:'いっぽう',t:'Satu arah / Sementara itu'}]},
-  {k:'事',m:'Hal / Urusan',on:'ジ・ズ',kun:'こと',s:8,cat:'abstrak',ex:[{w:'仕事',r:'しごと',t:'Pekerjaan'},{w:'大事',r:'だいじ',t:'Penting'},{w:'事故',r:'じこ',t:'Kecelakaan'}]},
-  {k:'物',m:'Benda / Hal',on:'ブツ・モツ',kun:'もの',s:8,cat:'benda',ex:[{w:'物',r:'もの',t:'Benda/hal'},{w:'買い物',r:'かいもの',t:'Belanja'},{w:'食べ物',r:'たべもの',t:'Makanan'}]},
-  {k:'所',m:'Tempat',on:'ショ・ジョ',kun:'ところ',s:8,cat:'tempat',ex:[{w:'所',r:'ところ',t:'Tempat'},{w:'場所',r:'ばしょ',t:'Lokasi'},{w:'住所',r:'じゅうしょ',t:'Alamat'}]},
+  {k:'名',m:'Nama / Terkenal',on:'メイ・ミョウ',kun:'な',s:6,cat:'abstrak',ex:[{w:'名前',r:'なまえ',t:'Nama'},{w:'有名',r:'ゆうめい',t:'Terkenal'}]},
+  {k:'半',m:'Setengah',on:'ハン',kun:'-',s:5,cat:'angka',ex:[{w:'半分',r:'はんぶん',t:'Setengah'}]},
+  {k:'毎',m:'Setiap',on:'マイ',kun:'-',s:6,cat:'waktu',ex:[{w:'毎日',r:'まいにち',t:'Setiap hari'},{w:'毎週',r:'まいしゅう',t:'Setiap minggu'}]},
+  {k:'週',m:'Minggu',on:'シュウ',kun:'-',s:11,cat:'waktu',ex:[{w:'今週',r:'こんしゅう',t:'Minggu ini'},{w:'来週',r:'らいしゅう',t:'Minggu depan'}]},
+  {k:'間',m:'Antara / Selama',on:'カン・ケン',kun:'あいだ・ま',s:12,cat:'waktu',ex:[{w:'時間',r:'じかん',t:'Waktu'},{w:'人間',r:'にんげん',t:'Manusia'}]},
+  {k:'方',m:'Arah / Cara',on:'ホウ',kun:'かた',s:4,cat:'abstrak',ex:[{w:'方法',r:'ほうほう',t:'Cara/Metode'}]},
+  {k:'事',m:'Hal / Urusan',on:'ジ・ズ',kun:'こと',s:8,cat:'abstrak',ex:[{w:'仕事',r:'しごと',t:'Pekerjaan'},{w:'大事',r:'だいじ',t:'Penting'}]},
+  {k:'物',m:'Benda / Hal',on:'ブツ・モツ',kun:'もの',s:8,cat:'benda',ex:[{w:'物',r:'もの',t:'Benda'},{w:'食べ物',r:'たべもの',t:'Makanan'}]},
+  {k:'所',m:'Tempat',on:'ショ・ジョ',kun:'ところ',s:8,cat:'tempat',ex:[{w:'場所',r:'ばしょ',t:'Lokasi'},{w:'住所',r:'じゅうしょ',t:'Alamat'}]},
 ];
-
-// ══════════════════════════════════════════════════
-// DATA — GRAMMAR
-// ══════════════════════════════════════════════════
 const GRAMMAR = [
-  {pattern:'〜は〜です',nama:'Pola identitas dasar',desc:'"は" (wa) = penanda topik, "です" (desu) = kata kerja sopan "adalah". Ini pola paling dasar bahasa Jepang.',
+  {pattern:'〜は〜です',nama:'Pola identitas dasar',desc:'"は" (wa) = penanda topik, "です" (desu) = kata kerja sopan "adalah".',
    contoh:[{jp:'私は会社員です。',kana:'わたしはかいしゃいんです。',r:'Watashi wa kaishain desu.',id:'Saya adalah karyawan perusahaan.'},{jp:'これは本です。',kana:'これはほんです。',r:'Kore wa hon desu.',id:'Ini adalah buku.'}]},
-  {pattern:'〜を〜ます',nama:'Pola kalimat kerja sopan',desc:'"を" (wo/o) = penanda objek. Kata kerja bentuk "-masu" untuk percakapan formal dan sopan di tempat kerja.',
+  {pattern:'〜を〜ます',nama:'Pola kalimat kerja sopan',desc:'"を" (wo/o) = penanda objek. Kata kerja bentuk "-masu" untuk percakapan formal.',
    contoh:[{jp:'日本語を勉強します。',kana:'にほんごをべんきょうします。',r:'Nihongo o benkyō shimasu.',id:'Saya belajar bahasa Jepang.'},{jp:'水を飲みます。',kana:'みずをのみます。',r:'Mizu o nomimasu.',id:'Saya minum air.'}]},
-  {pattern:'〜たいです',nama:'Ingin melakukan sesuatu',desc:'Akar kata kerja + "たいです" = menyatakan keinginan. Sangat berguna saat wawancara kerja.',
+  {pattern:'〜たいです',nama:'Ingin melakukan sesuatu',desc:'Akar kata kerja + "たいです" = menyatakan keinginan.',
    contoh:[{jp:'日本で働きたいです。',kana:'にほんではたらきたいです。',r:'Nihon de hatarakitai desu.',id:'Saya ingin bekerja di Jepang.'},{jp:'日本語を話したいです。',kana:'にほんごをはなしたいです。',r:'Nihongo o hanashitai desu.',id:'Saya ingin berbicara bahasa Jepang.'}]},
-  {pattern:'〜ています',nama:'Sedang melakukan (bentuk -te iru)',desc:'Kata kerja bentuk -te + います menunjukkan aksi sedang berlangsung atau kondisi yang masih berlaku.',
+  {pattern:'〜ています',nama:'Sedang melakukan',desc:'Kata kerja bentuk -te + います menunjukkan aksi sedang berlangsung.',
    contoh:[{jp:'今、仕事をしています。',kana:'いま、しごとをしています。',r:'Ima, shigoto o shite imasu.',id:'Sekarang sedang bekerja.'},{jp:'日本語を勉強しています。',kana:'にほんごをべんきょうしています。',r:'Nihongo o benkyō shite imasu.',id:'Sedang belajar bahasa Jepang.'}]},
-  {pattern:'〜ませんか',nama:'Ajakan sopan',desc:'Kata kerja negatif sopan + か = mengajak dengan sopan. Sangat umum di lingkungan kerja dan sosial Jepang.',
+  {pattern:'〜ませんか',nama:'Ajakan sopan',desc:'Kata kerja negatif sopan + か = mengajak dengan sopan.',
    contoh:[{jp:'一緒に食べませんか。',kana:'いっしょにたべませんか。',r:'Issho ni tabemasen ka.',id:'Maukah makan bersama?'},{jp:'手伝いましょうか。',kana:'てつだいましょうか。',r:'Tetsudai mashō ka.',id:'Boleh saya bantu?'}]},
-  {pattern:'〜てください',nama:'Permintaan sopan',desc:'Kata kerja bentuk -te + ください = meminta seseorang melakukan sesuatu dengan sopan.',
+  {pattern:'〜てください',nama:'Permintaan sopan',desc:'Kata kerja bentuk -te + ください = meminta seseorang melakukan sesuatu.',
    contoh:[{jp:'ここに名前を書いてください。',kana:'ここになまえをかいてください。',r:'Koko ni namae o kaite kudasai.',id:'Tolong tulis nama di sini.'},{jp:'ちょっと待ってください。',kana:'ちょっとまってください。',r:'Chotto matte kudasai.',id:'Tolong tunggu sebentar.'}]},
   {pattern:'〜ないでください',nama:'Tolong jangan lakukan',desc:'Kata kerja bentuk negatif -nai + でください = meminta orang TIDAK melakukan sesuatu.',
    contoh:[{jp:'ここで食べないでください。',kana:'ここでたべないでください。',r:'Koko de tabenai de kudasai.',id:'Tolong jangan makan di sini.'},{jp:'写真を撮らないでください。',kana:'しゃしんをとらないでください。',r:'Shashin o toranai de kudasai.',id:'Tolong jangan memotret.'}]},
-  {pattern:'〜ことができます',nama:'Bisa / Mampu melakukan',desc:'Kata benda + ことができます = menyatakan kemampuan. Penting saat wawancara kerja.',
+  {pattern:'〜ことができます',nama:'Bisa / Mampu melakukan',desc:'Kata benda + ことができます = menyatakan kemampuan.',
    contoh:[{jp:'日本語を話すことができます。',kana:'にほんごをはなすことができます。',r:'Nihongo o hanasu koto ga dekimasu.',id:'Saya bisa berbicara bahasa Jepang.'},{jp:'運転することができます。',kana:'うんてんすることができます。',r:'Unten suru koto ga dekimasu.',id:'Saya bisa mengemudi.'}]},
 ];
-
-// ══════════════════════════════════════════════════
-// DATA — QUIZ
-// ══════════════════════════════════════════════════
 const QUIZ_DATA = [
   {q:'会社 artinya...',jp:'会社',h:'かいしゃ',opts:['Pekerjaan','Perusahaan','Pabrik','Gaji'],ans:1},
   {q:'Bagaimana cara baca 仕事?',jp:'仕事',h:'しごと',opts:['kaisha','kyūryō','shigoto','zangyō'],ans:2},
@@ -733,14 +725,16 @@ const QUIZ_DATA = [
 ];
 
 // ══════════════════════════════════════════════════
-// STATE
+// SCREEN
 // ══════════════════════════════════════════════════
-let fcCategory = 'kerja', fcCards = [], fcIndex = 0, fcFlipped = false;
-let quizIndex = 0, quizScore = 0, quizAnswered = false, quizQuestions = [];
-let kanjiFilter = 'semua', kanjiSearch = '';
+function showScreen(s) {
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = s === 'auth' ? 'flex' : 'none';
+  document.getElementById('app-screen').style.display = s === 'app' ? 'block' : 'none';
+}
 
 // ══════════════════════════════════════════════════
-// AUTH FUNCTIONS
+// AUTH
 // ══════════════════════════════════════════════════
 function switchAuthTab(tab, el) {
   document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -748,6 +742,8 @@ function switchAuthTab(tab, el) {
   document.getElementById('form-login').style.display = tab === 'login' ? 'flex' : 'none';
   document.getElementById('form-register').style.display = tab === 'register' ? 'flex' : 'none';
 }
+function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pass = document.getElementById('login-password').value;
@@ -756,9 +752,12 @@ async function doLogin() {
   errEl.style.display = 'none';
   if (!email || !pass) { showErr(errEl, 'Isi email dan password dulu.'); return; }
   btn.disabled = true; btn.textContent = 'Memproses...';
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  btn.disabled = false; btn.textContent = 'Masuk';
-  if (error) showErr(errEl, error.message.includes('Invalid') ? 'Email atau password salah.' : error.message);
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Masuk';
+    showErr(errEl, e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' ? 'Email atau password salah.' : e.message);
+  }
 }
 async function doRegister() {
   const name = document.getElementById('reg-name').value.trim();
@@ -771,41 +770,37 @@ async function doRegister() {
   if (!name || !email || !pass) { showErr(errEl, 'Isi semua kolom.'); return; }
   if (pass.length < 6) { showErr(errEl, 'Password minimal 6 karakter.'); return; }
   btn.disabled = true; btn.textContent = 'Membuat akun...';
-  const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
-  btn.disabled = false; btn.textContent = 'Buat Akun';
-  if (error) { showErr(errEl, error.message); return; }
-  sucEl.textContent = '✓ Akun dibuat! Cek email untuk verifikasi, lalu masuk.';
-  sucEl.style.display = 'block';
+  try {
+    const result = await auth.createUserWithEmailAndPassword(email, pass);
+    await result.user.updateProfile({ displayName: name });
+    sucEl.textContent = '✓ Akun dibuat! Silakan masuk.';
+    sucEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Buat Akun';
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Buat Akun';
+    showErr(errEl, e.message);
+  }
 }
 async function doGoogleLogin() {
-  await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+  } catch(e) {
+    console.error('Google login error:', e);
+  }
 }
 async function doLogout() {
-  await sb.auth.signOut();
-  currentUser = null; userProgress = {};
-  learnedH = []; learnedK = []; learnedD = []; learnedVocab = {};
-  appInitialized = false;
-  showScreen('auth');
-}
-function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
-
-// ══════════════════════════════════════════════════
-// SCREEN
-// ══════════════════════════════════════════════════
-function showScreen(s) {
-  document.getElementById('loading-screen').style.display = 'none';
-  document.getElementById('auth-screen').style.display = s === 'auth' ? 'flex' : 'none';
-  document.getElementById('app-screen').style.display = s === 'app' ? 'block' : 'none';
+  await auth.signOut();
 }
 
 // ══════════════════════════════════════════════════
-// SUPABASE — LOAD & SAVE PROGRESS
+// FIRESTORE — LOAD & SAVE
 // ══════════════════════════════════════════════════
 async function loadProgress() {
-  const uid = currentUser.id;
   try {
-    const { data } = await sb.from('user_progress').select('*').eq('user_id', uid).maybeSingle();
-    if (data) {
+    const doc = await db.collection('user_progress').doc(currentUser.uid).get();
+    if (doc.exists) {
+      const data = doc.data();
       learnedH = data.learned_hiragana || [];
       learnedK = data.learned_katakana || [];
       learnedD = data.learned_dakuon || [];
@@ -813,29 +808,29 @@ async function loadProgress() {
       userProgress = { xp: data.xp || 0, streak: data.streak || 0, quizDone: data.quiz_done || 0 };
     } else {
       userProgress = { xp: 0, streak: 0, quizDone: 0 };
-      await sb.from('user_progress').upsert({
-        user_id: uid, learned_hiragana: [], learned_katakana: [],
-        learned_dakuon: [], learned_vocab: {}, xp: 0, streak: 0,
-        quiz_done: 0, last_login: new Date().toISOString()
-      }, { onConflict: 'user_id' });
+      await db.collection('user_progress').doc(currentUser.uid).set({
+        learned_hiragana: [], learned_katakana: [], learned_dakuon: [],
+        learned_vocab: {}, xp: 0, streak: 0, quiz_done: 0,
+        last_login: firebase.firestore.FieldValue.serverTimestamp()
+      });
     }
-  } catch (err) {
-    console.warn('loadProgress gagal, pakai default:', err);
+  } catch(err) {
+    console.warn('loadProgress gagal:', err);
     userProgress = { xp: 0, streak: 0, quizDone: 0 };
   }
 }
 async function saveProgress() {
   if (!currentUser) return;
   try {
-    await sb.from('user_progress').upsert({
-      user_id: currentUser.id,
+    await db.collection('user_progress').doc(currentUser.uid).set({
       learned_hiragana: learnedH, learned_katakana: learnedK,
       learned_dakuon: learnedD, learned_vocab: learnedVocab,
       xp: userProgress.xp || 0, streak: userProgress.streak || 0,
-      quiz_done: userProgress.quizDone || 0, last_login: new Date().toISOString(),
-    }, { onConflict: 'user_id' });
+      quiz_done: userProgress.quizDone || 0,
+      last_login: firebase.firestore.FieldValue.serverTimestamp()
+    });
     flashSave();
-  } catch (err) {
+  } catch(err) {
     console.warn('saveProgress gagal:', err);
   }
 }
@@ -850,8 +845,7 @@ function flashSave() {
 // UI UPDATE
 // ══════════════════════════════════════════════════
 function updateSidebarUser() {
-  const meta = currentUser.user_metadata || {};
-  const name = meta.full_name || meta.name || currentUser.email.split('@')[0];
+  const name = currentUser.displayName || currentUser.email.split('@')[0];
   const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   document.getElementById('user-avatar').textContent = initials;
   document.getElementById('user-name').textContent = name;
@@ -931,8 +925,7 @@ function buildDakuon() {
     sec.items.forEach(item => {
       const learned = learnedD.includes(item.jp) ? 'learned' : '';
       html += `<div class="daku-cell ${learned}" onclick="toggleDaku('${item.jp}',this)">
-        <div class="daku-main jp">${item.jp}</div>
-        <div class="daku-sub">${item.r}</div>
+        <div class="daku-main jp">${item.jp}</div><div class="daku-sub">${item.r}</div>
         <div class="daku-from">${item.from}</div></div>`;
     });
     html += `</div></div>`;
@@ -958,8 +951,7 @@ function buildFcCats() {
 function setFcCat(cat, el) {
   fcCategory = cat; fcCards = [...VOCAB[cat]]; fcIndex = 0;
   document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  loadFc();
+  el.classList.add('active'); loadFc();
 }
 function loadFc() {
   fcFlipped = false;
@@ -972,17 +964,17 @@ function loadFc() {
   document.getElementById('fc-ex-jp').textContent = c.ex.jp;
   document.getElementById('fc-ex-rom').textContent = c.ex.h + ' / ' + c.ex.r;
   document.getElementById('fc-ex-id').textContent = c.ex.id;
-  ['fc-hiragana', 'fc-katakana', 'fc-romaji', 'fc-meaning', 'fc-example-block'].forEach(id =>
+  ['fc-hiragana','fc-katakana','fc-romaji','fc-meaning','fc-example-block'].forEach(id =>
     document.getElementById(id).style.display = 'none');
   document.getElementById('fc-hint').style.display = 'block';
   document.getElementById('fc-btns').style.display = 'none';
-  const catLabel = { kerja: 'Kosakata Kerja', sehari: 'Sehari-hari', angka: 'Angka', percakapan: 'Percakapan' }[fcCategory];
+  const catLabel = {kerja:'Kosakata Kerja',sehari:'Sehari-hari',angka:'Angka',percakapan:'Percakapan'}[fcCategory];
   document.getElementById('fc-prog').textContent = `Kartu ${fcIndex + 1} dari ${fcCards.length} — ${catLabel}`;
 }
 function flipCard() {
   if (fcFlipped) return;
   fcFlipped = true;
-  ['fc-hiragana', 'fc-katakana', 'fc-romaji', 'fc-meaning', 'fc-example-block'].forEach(id =>
+  ['fc-hiragana','fc-katakana','fc-romaji','fc-meaning','fc-example-block'].forEach(id =>
     document.getElementById(id).style.display = 'block');
   document.getElementById('fc-hint').style.display = 'none';
   document.getElementById('fc-btns').style.display = 'flex';
@@ -1009,13 +1001,12 @@ function buildGrammar() {
       <div class="grammar-label">Penjelasan</div>
       <div class="grammar-desc">${g.desc}</div>
       <div class="grammar-label" style="margin-top:10px">Contoh kalimat</div>
-      ${g.contoh.map(c => `
-        <div class="grammar-example">
-          <div class="grammar-ex-jp">${c.jp}</div>
-          <div class="grammar-ex-kana">${c.kana}</div>
-          <div class="grammar-ex-rom">${c.r}</div>
-          <div class="grammar-ex-id">${c.id}</div>
-        </div>`).join('')}
+      ${g.contoh.map(c => `<div class="grammar-example">
+        <div class="grammar-ex-jp">${c.jp}</div>
+        <div class="grammar-ex-kana">${c.kana}</div>
+        <div class="grammar-ex-rom">${c.r}</div>
+        <div class="grammar-ex-id">${c.id}</div>
+      </div>`).join('')}
     </div>`).join('');
 }
 
@@ -1024,21 +1015,18 @@ function buildGrammar() {
 // ══════════════════════════════════════════════════
 function startQuiz() {
   quizQuestions = [...QUIZ_DATA].sort(() => Math.random() - .5).slice(0, 10);
-  quizIndex = 0; quizScore = 0;
-  showQuestion();
+  quizIndex = 0; quizScore = 0; showQuestion();
 }
 function showQuestion() {
   const q = quizQuestions[quizIndex];
   quizAnswered = false;
   document.getElementById('quiz-area').innerHTML = `
     <div class="card">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Soal ${quizIndex + 1} dari ${quizQuestions.length} | Skor: ${quizScore}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Soal ${quizIndex+1} dari ${quizQuestions.length} | Skor: ${quizScore}</div>
       <div style="font-size:15px;font-weight:700;margin-bottom:4px">${q.q}</div>
       <div class="quiz-jp-big">${q.jp}</div>
       <div class="quiz-furigana">${q.h}</div>
-      <div class="quiz-options">
-        ${q.opts.map((o, i) => `<button class="quiz-opt" onclick="answerQuiz(${i})">${o}</button>`).join('')}
-      </div>
+      <div class="quiz-options">${q.opts.map((o,i) => `<button class="quiz-opt" onclick="answerQuiz(${i})">${o}</button>`).join('')}</div>
     </div>`;
 }
 function answerQuiz(chosen) {
@@ -1061,7 +1049,7 @@ function showResult() {
     <div class="card" style="text-align:center;padding:30px">
       <div class="quiz-score-big">${quizScore}/${quizQuestions.length}</div>
       <div class="quiz-meta">${pct}% benar — ${msg}</div>
-      <div style="font-size:13px;color:var(--muted);margin-top:8px">+${quizScore * 10} XP tersimpan ke akun kamu</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:8px">+${quizScore*10} XP tersimpan ke akun kamu</div>
       <button class="btn-primary" onclick="startQuiz()" style="margin:16px auto 0">Ulangi Quiz</button>
     </div>`;
 }
@@ -1078,13 +1066,9 @@ function buildKamusCats() {
 function setKanjiFilter(cat, el) {
   kanjiFilter = cat;
   document.querySelectorAll('.kf-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  renderKanji();
+  el.classList.add('active'); renderKanji();
 }
-function filterKanji() {
-  kanjiSearch = document.getElementById('kanji-search').value.toLowerCase();
-  renderKanji();
-}
+function filterKanji() { kanjiSearch = document.getElementById('kanji-search').value.toLowerCase(); renderKanji(); }
 function renderKanji() {
   let filtered = KANJI_LIST;
   if (kanjiFilter !== 'semua') filtered = filtered.filter(k => k.cat === kanjiFilter);
@@ -1126,14 +1110,10 @@ function closeModal(e) {
 }
 
 // ══════════════════════════════════════════════════
-// INIT APP — HANYA SATU, DI PALING BAWAH
+// INIT APP
 // ══════════════════════════════════════════════════
-  
-let appInitialized = false;
-
 async function initApp(user) {
   currentUser = user;
-  showScreen('loading');
   try {
     await loadProgress();
     updateSidebarUser();
@@ -1141,56 +1121,39 @@ async function initApp(user) {
     buildKanaGrid(KATAKANA, 'katakana-grid', 'K', learnedK);
     buildDakuon();
     fcCards = [...VOCAB[fcCategory]];
-    buildFcCats();
-    loadFc();
+    buildFcCats(); loadFc();
     buildGrammar();
     startQuiz();
-    buildKamusCats();
-    renderKanji();
+    buildKamusCats(); renderKanji();
     showScreen('app');
-  } catch (err) {
+  } catch(err) {
     console.error('initApp error:', err);
     learnedH = []; learnedK = []; learnedD = []; learnedVocab = {};
     userProgress = { xp: 0, streak: 0, quizDone: 0 };
-    try {
-      updateSidebarUser();
-      buildKanaGrid(HIRAGANA, 'hiragana-grid', 'H', learnedH);
-      buildKanaGrid(KATAKANA, 'katakana-grid', 'K', learnedK);
-      buildDakuon();
-      fcCards = [...VOCAB[fcCategory]];
-      buildFcCats();
-      loadFc();
-      buildGrammar();
-      startQuiz();
-      buildKamusCats();
-      renderKanji();
-    } catch (e) { console.error(e); }
+    updateSidebarUser();
+    buildKanaGrid(HIRAGANA, 'hiragana-grid', 'H', learnedH);
+    buildKanaGrid(KATAKANA, 'katakana-grid', 'K', learnedK);
+    buildDakuon();
+    fcCards = [...VOCAB[fcCategory]];
+    buildFcCats(); loadFc();
+    buildGrammar();
+    startQuiz();
+    buildKamusCats(); renderKanji();
     showScreen('app');
   }
 }
 
 // ══════════════════════════════════════════════════
-// AUTH STATE LISTENER
+// FIREBASE AUTH LISTENER — Tidak ada blank saat refresh!
+// onAuthStateChanged Firebase selalu dipanggil saat load,
+// baik user sudah login maupun belum.
 // ══════════════════════════════════════════════════
-sb.auth.onAuthStateChange(async (event, session) => {
-  console.log('Auth event:', event, 'User:', session?.user?.email);
-
-  // INITIAL_SESSION = dipanggil saat pertama load/refresh
-  // SIGNED_IN = dipanggil saat user baru login
-  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
-    if (session?.user) {
-      if (appInitialized) return; // cegah double init
-      appInitialized = true;
-      await initApp(session.user);
-    } else {
-      // INITIAL_SESSION tapi tidak ada sesi = belum login
-      showScreen('auth');
-    }
-  } else if (event === 'SIGNED_OUT') {
-    appInitialized = false;
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    await initApp(user);
+  } else {
     showScreen('auth');
   }
-  // TOKEN_REFRESHED diabaikan — tidak perlu re-init
 });
 </script>
 </body>
