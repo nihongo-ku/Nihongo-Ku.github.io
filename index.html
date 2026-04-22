@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nihongo Ku! | JLPT N5</title>
+<title>Nihongo Belajar! | JLPT N5</title>
 <link rel="icon" href="nihongo-favicon.ico" type="image/x-icon">
 
 <!-- Firebase SDK -->
@@ -247,29 +247,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   .user-row{justify-content:center}
 }
 
-/* ══════════════════════════════════════════
-   ANIMATED GRADIENT BACKGROUND
-══════════════════════════════════════════ */
-body::before{content:'';position:fixed;inset:0;z-index:-1;
-  background:
-    radial-gradient(ellipse 600px 500px at 15% 20%,rgba(108,143,255,0.10) 0%,transparent 70%),
-    radial-gradient(ellipse 500px 400px at 85% 80%,rgba(167,139,250,0.09) 0%,transparent 70%),
-    radial-gradient(ellipse 400px 300px at 50% 50%,rgba(45,212,191,0.06) 0%,transparent 70%);
-  animation:bgPulse 14s ease-in-out infinite alternate;pointer-events:none}
-@keyframes bgPulse{
-  0%  {opacity:.7;filter:hue-rotate(0deg)}
-  50% {opacity:1;filter:hue-rotate(15deg)}
-  100%{opacity:.8;filter:hue-rotate(-10deg)}}
-.orb{position:fixed;border-radius:50%;filter:blur(90px);z-index:-1;pointer-events:none;animation:orbFloat linear infinite}
-.orb1{width:500px;height:500px;background:rgba(108,143,255,0.06);top:-150px;left:-150px;animation-duration:22s}
-.orb2{width:400px;height:400px;background:rgba(167,139,250,0.07);bottom:-100px;right:-100px;animation-duration:28s;animation-direction:reverse}
-.orb3{width:300px;height:300px;background:rgba(45,212,191,0.05);top:45%;left:45%;animation-duration:35s;animation-delay:-10s}
-@keyframes orbFloat{
-  0%  {transform:translate(0,0) scale(1)}
-  25% {transform:translate(50px,-60px) scale(1.08)}
-  50% {transform:translate(-30px,70px) scale(0.93)}
-  75% {transform:translate(-60px,-20px) scale(1.05)}
-  100%{transform:translate(0,0) scale(1)}}
+/* Old body::before removed — bg-canvas handles all backgrounds */
 
 /* ══════════════════════════════════════════
    PAGE TRANSITION
@@ -451,69 +429,77 @@ html[data-theme="light"] .theme-toggle-thumb { transform: translateX(24px); back
 
 /* ══════════════════════════════════════════
    ANIMATED GRADIENT BG CANVAS — BOTH MODES
+   FIX: Use separate divs for rotating blobs,
+   NOT ::before/::after which get clipped.
+   Each blob is oversized and centered so
+   rotation never shows a hard edge.
 ══════════════════════════════════════════ */
 .bg-canvas {
   position: fixed; inset: 0; z-index: -2; pointer-events: none;
-  transition: opacity 2s ease !important;
+  overflow: hidden;
 }
-/* DARK — Night Sky with rotating nebulae */
-html[data-theme="dark"] .bg-canvas {
-  background: #0a0d1a;
-}
-html[data-theme="dark"] .bg-canvas::before {
-  content:''; position:absolute; inset:0;
-  background:
-    radial-gradient(ellipse 60% 50% at 20% 15%, rgba(30,60,160,0.55) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 45% at 80% 85%, rgba(80,20,140,0.50) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 40% at 55% 45%, rgba(10,30,100,0.35) 0%, transparent 70%),
-    radial-gradient(ellipse 70% 30% at 10% 80%, rgba(20,10,80,0.40) 0%, transparent 60%);
-  animation: nightRotate 20s linear infinite;
-  transform-origin: center center;
-}
-html[data-theme="dark"] .bg-canvas::after {
-  content:''; position:absolute; inset:0;
-  background:
-    radial-gradient(ellipse 45% 55% at 70% 20%, rgba(100,50,200,0.30) 0%, transparent 65%),
-    radial-gradient(ellipse 35% 35% at 30% 70%, rgba(30,80,180,0.25) 0%, transparent 60%);
-  animation: nightRotate 28s linear infinite reverse;
-  transform-origin: center center;
-}
-@keyframes nightRotate {
-  0%   { transform: rotate(0deg)   scale(1.1); }
-  25%  { transform: rotate(90deg)  scale(1.05); }
-  50%  { transform: rotate(180deg) scale(1.15); }
-  75%  { transform: rotate(270deg) scale(1.08); }
-  100% { transform: rotate(360deg) scale(1.1); }
+/* Solid base colour per theme */
+html[data-theme="dark"]  .bg-canvas { background: #08091a; }
+html[data-theme="light"] .bg-canvas { background: linear-gradient(180deg,#87c0f5 0%,#b5d9fa 45%,#d6ecff 100%); }
+
+/* Shared rotating blob style */
+.bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  /* Make each blob larger than viewport so rotation edge never shows */
+  width: 200vmax; height: 200vmax;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
-/* LIGHT — Daytime Sky with rotating sun energy */
-html[data-theme="light"] .bg-canvas {
-  background: linear-gradient(180deg, #7ab8f5 0%, #a8d4f8 35%, #c8e8ff 65%, #ddeeff 100%);
+/* ── DARK blobs ── */
+.bg-blob-d1 {
+  background: radial-gradient(ellipse 30% 25% at 30% 35%,
+    rgba(40,70,200,0.55) 0%, transparent 60%);
+  animation: blobSpin 22s linear infinite;
 }
-html[data-theme="light"] .bg-canvas::before {
-  content:''; position:absolute; inset:0;
-  background:
-    radial-gradient(ellipse 50% 50% at 75% 8%,  rgba(255,230,80,0.55)  0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 85% 12%, rgba(255,200,50,0.30)  0%, transparent 60%),
-    radial-gradient(ellipse 40% 50% at 10% 30%, rgba(120,190,255,0.30) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 35% at 50% 90%, rgba(180,220,255,0.25) 0%, transparent 55%);
-  animation: dayRotate 25s linear infinite;
-  transform-origin: 75% 8%;
+.bg-blob-d2 {
+  background: radial-gradient(ellipse 28% 30% at 70% 65%,
+    rgba(100,30,180,0.50) 0%, transparent 60%);
+  animation: blobSpin 30s linear infinite reverse;
 }
-html[data-theme="light"] .bg-canvas::after {
-  content:''; position:absolute; inset:0;
-  background:
-    radial-gradient(ellipse 80% 20% at 50% 0%,  rgba(255,240,150,0.25) 0%, transparent 70%),
-    radial-gradient(ellipse 30% 60% at 95% 50%, rgba(150,200,255,0.20) 0%, transparent 55%);
-  animation: dayRotate 35s linear infinite reverse;
-  transform-origin: 75% 10%;
+.bg-blob-d3 {
+  background: radial-gradient(ellipse 22% 22% at 55% 25%,
+    rgba(20,50,160,0.35) 0%, transparent 55%);
+  animation: blobSpin 40s linear infinite;
 }
-@keyframes dayRotate {
-  0%   { transform: rotate(0deg)   scale(1.05); }
-  25%  { transform: rotate(90deg)  scale(1.1); }
-  50%  { transform: rotate(180deg) scale(1.05); }
-  75%  { transform: rotate(270deg) scale(1.08); }
-  100% { transform: rotate(360deg) scale(1.05); }
+html[data-theme="light"] .bg-blob-d1,
+html[data-theme="light"] .bg-blob-d2,
+html[data-theme="light"] .bg-blob-d3 { opacity: 0; }
+
+/* ── LIGHT blobs ── */
+.bg-blob-l1 {
+  background: radial-gradient(ellipse 28% 24% at 72% 18%,
+    rgba(255,225,80,0.45) 0%, transparent 60%);
+  animation: blobSpin 28s linear infinite;
+}
+.bg-blob-l2 {
+  background: radial-gradient(ellipse 30% 26% at 20% 40%,
+    rgba(130,195,255,0.35) 0%, transparent 60%);
+  animation: blobSpin 36s linear infinite reverse;
+}
+.bg-blob-l3 {
+  background: radial-gradient(ellipse 24% 30% at 60% 80%,
+    rgba(180,225,255,0.30) 0%, transparent 55%);
+  animation: blobSpin 44s linear infinite;
+}
+html[data-theme="dark"] .bg-blob-l1,
+html[data-theme="dark"] .bg-blob-l2,
+html[data-theme="dark"] .bg-blob-l3 { opacity: 0; }
+
+/* All blobs transition opacity when theme switches */
+.bg-blob { transition: opacity 2s ease; }
+
+@keyframes blobSpin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 /* ══════════════════════════════════════════
@@ -659,26 +645,28 @@ html[data-theme="light"] .cloud-layer { opacity:1; }
 @keyframes cloudDrift { from{transform:translateX(0)} to{transform:translateX(calc(100vw + 280px))} }
 
 /* ══════════════════════════════════════════
-   THEME SLIDE TRANSITION — LEFT/RIGHT WIPE
+   THEME FADE TRANSITION — simple fade overlay
+   No slide, no wipe — just a clean 2s fade
+   that doesn't block or disrupt the layout.
 ══════════════════════════════════════════ */
 .theme-wipe {
   position: fixed;
   inset: 0;
   z-index: 9999;
   pointer-events: none;
-  transform: translateX(-100%);
+  opacity: 0;
+  display: none;
 }
-.theme-wipe.wipe-in {
-  animation: wipeIn 1s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+.theme-wipe.fade-active {
+  display: block;
+  animation: themeFade 2s ease forwards;
 }
-.theme-wipe.wipe-out {
-  animation: wipeOut 1s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+@keyframes themeFade {
+  0%   { opacity: 0; }
+  20%  { opacity: 0.35; }
+  50%  { opacity: 0.35; }
+  100% { opacity: 0; }
 }
-/* Wipe from left — slides in then out */
-@keyframes wipeIn  { 0%{transform:translateX(-100%)} 100%{transform:translateX(0%)} }
-@keyframes wipeOut { 0%{transform:translateX(0%)}    100%{transform:translateX(100%)} }
-html[data-theme="dark"]  .theme-wipe { background: linear-gradient(135deg,#0a0d1a 0%,#1a1d40 50%,#0f1030 100%); }
-html[data-theme="light"] .theme-wipe { background: linear-gradient(135deg,#dde8f8 0%,#c5daf5 50%,#b0ccf0 100%); }
 
 /* ══════════════════════════════════════════
    MOBILE FIXES — LOGOUT + STREAK BOTTOM BAR
@@ -742,10 +730,16 @@ html[data-theme="light"] .modal-box  { box-shadow: 0 16px 64px rgba(0,30,100,0.1
 <body>
 
 <!-- BACKGROUND LAYERS -->
-<div class="bg-canvas" id="bg-canvas" style="position:fixed;inset:0;z-index:-2;pointer-events:none;transition:all 1s ease"></div>
-<div class="orb orb1"></div>
-<div class="orb orb2"></div>
-<div class="orb orb3"></div>
+<div class="bg-canvas" id="bg-canvas">
+  <!-- Dark mode blobs -->
+  <div class="bg-blob bg-blob-d1"></div>
+  <div class="bg-blob bg-blob-d2"></div>
+  <div class="bg-blob bg-blob-d3"></div>
+  <!-- Light mode blobs -->
+  <div class="bg-blob bg-blob-l1"></div>
+  <div class="bg-blob bg-blob-l2"></div>
+  <div class="bg-blob bg-blob-l3"></div>
+</div>
 <!-- Stars (dark mode) -->
 <div class="stars-layer" id="stars-layer"></div>
 <!-- Sun (light mode) -->
@@ -1824,37 +1818,29 @@ function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme') || 'dark';
   const next = current === 'dark' ? 'light' : 'dark';
 
-  // Step 1: Wipe IN (panel slides from left to cover screen)
+  // Set overlay colour to match the CURRENT theme so fade blends from current
   const wipe = document.getElementById('theme-wipe');
-  wipe.classList.remove('wipe-in','wipe-out');
-  void wipe.offsetWidth;
-  
-  // Pre-set the wipe color to the NEXT theme color before it starts
-  // so the panel shows the target color
-  if (next === 'light') {
-    wipe.style.background = 'linear-gradient(135deg,#dde8f8 0%,#c5daf5 50%,#b0ccf0 100%)';
-  } else {
-    wipe.style.background = 'linear-gradient(135deg,#0a0d1a 0%,#1a1d40 50%,#0f1030 100%)';
-  }
-  wipe.classList.add('wipe-in');
+  wipe.style.background = current === 'dark'
+    ? '#0a0d1a'
+    : 'linear-gradient(180deg,#87c0f5,#b5d9fa)';
 
-  // Step 2: At peak (halfway through), swap theme silently under the wipe
+  // Start fade overlay (0 → 0.35 → 0 over 2s)
+  wipe.classList.remove('fade-active');
+  void wipe.offsetWidth; // reflow
+  wipe.classList.add('fade-active');
+
+  // Swap theme at the midpoint (1s in) so it happens while overlay is at peak
   setTimeout(() => {
     document.documentElement.setAttribute('data-theme', next);
     const thumb = document.getElementById('theme-thumb');
     if (thumb) thumb.textContent = next === 'dark' ? '🌙' : '☀️';
     localStorage.setItem('nihongo_theme', next);
-  }, 500);
+  }, 700);
 
-  // Step 3: Wipe OUT (panel slides to the right revealing new theme)
+  // Clean up overlay class after animation ends
   setTimeout(() => {
-    wipe.classList.remove('wipe-in');
-    void wipe.offsetWidth;
-    wipe.classList.add('wipe-out');
-    setTimeout(() => {
-      wipe.classList.remove('wipe-out');
-    }, 1000);
-  }, 1000);
+    wipe.classList.remove('fade-active');
+  }, 2100);
 }
 
 // Init theme on load
