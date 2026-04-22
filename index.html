@@ -42,80 +42,62 @@ html[data-theme="light"] {
 }
 
 /* ══════════════════════════════════════════
-   THEME TRANSITION — KEY FIX
+   RESET & BOX MODEL
+══════════════════════════════════════════ */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ══════════════════════════════════════════
+   THEME TRANSITION — DEFINITIVE FIX
    
-   Root cause of glitches:
-   1. !important on transitions created specificity wars
-   2. Overlay colour depended on OLD theme → wrong shade flashed
-   3. Mobile had conflicting transition rules
+   Strategy: "freeze → swap → unfreeze"
    
-   Solution:
-   - NO !important anywhere in transitions
-   - Neutral overlay: dark→light uses near-white, light→dark uses near-black
-   - Overlay covers screen, theme switches instantly behind it
-   - Overlay fades out revealing smoothly-transitioned elements
-   - Short element transition (0.65s) ensures colours settle DURING fade-out
+   JS adds class .no-transition to <html>
+   which kills ALL colour transitions instantly.
+   Theme attribute switches while screen is
+   fully hidden behind the overlay.
+   Then .no-transition is removed so future
+   hover/interactive transitions work normally.
+   
+   Overlay is pure opacity fade — no colour
+   dependency on old or new theme.
+   Background is a mid-grey that works as a
+   neutral bridge between dark and light.
 ══════════════════════════════════════════ */
 
-/* Base colour transitions — applies to everything */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* When .no-transition is active, kill ALL transitions on everything */
+html.no-transition *,
+html.no-transition *::before,
+html.no-transition *::after {
+  transition: none !important;
+  animation-duration: 0.001s !important;
 }
 
-/* Selective transitions — only colour properties, no layout */
-body,
-.sidebar, .main,
-.card, .stat-box, .auth-box, .modal-box,
-.nav-item, .user-block, .logo,
-.kana-cell, .daku-cell,
-.kanji-card, .kanji-example-mini,
-.grammar-item, .grammar-example,
-.fc-card-front, .fc-card-back, .fc-example-block,
-.quiz-opt, .quiz-area,
-.lb-item,
-.auth-input, .kanji-search,
-.mod-item, .today-card,
-.bg-canvas,
-.stars-layer, .sun-wrap, .cloud-layer,
-.bg-blob,
-.mobile-bottom-bar {
-  transition:
-    background-color 0.65s ease,
-    border-color 0.55s ease,
-    color 0.45s ease,
-    box-shadow 0.55s ease;
-}
+/* Normal interactive transitions (active when no-transition is NOT set) */
+.kana-cell        { transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.18s cubic-bezier(0.34,1.56,0.64,1); }
+.daku-cell        { transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.18s cubic-bezier(0.34,1.56,0.64,1); }
+.nav-item         { transition: background-color 0.15s ease, color 0.15s ease; }
+.kanji-card       { transition: border-color 0.15s ease, transform 0.18s ease, box-shadow 0.18s ease; }
+.mod-item         { transition: border-color 0.15s ease, transform 0.15s ease; }
+.today-card       { transition: border-color 0.15s ease, transform 0.18s cubic-bezier(0.22,1,.36,1); }
+.stat-box         { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+button            { transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease; }
+.xp-fill          { transition: width 0.5s ease; }
+.fc-card          { transition: transform 0.55s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease, border-color 0.3s ease; }
 
-/* Interactive elements — fast, no colour transition override needed */
-button { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.12s ease, opacity 0.2s ease; }
-.kana-cell:hover, .daku-cell:hover { transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.18s cubic-bezier(0.34,1.56,0.64,1); }
-
-/* ── THEME WIPE OVERLAY ── */
+/* ── THEME OVERLAY ──
+   Pure opacity fade. Colour is a neutral mid-tone
+   set by JS — does not depend on old or new theme.  */
 #theme-wipe {
   position: fixed;
   inset: 0;
   z-index: 99999;
   pointer-events: none;
   opacity: 0;
-  /* Default transparent — JS sets colour before animating */
+  background: #6a7a99; /* neutral mid-grey — works as bridge for both directions */
+  transition: opacity 0.38s ease;
 }
-#theme-wipe.wipe-in {
-  animation: themeWipeIn 0.32s cubic-bezier(0.4, 0, 0.6, 1) forwards;
-}
-#theme-wipe.wipe-out {
-  animation: themeWipeOut 0.55s cubic-bezier(0.4, 0, 0.6, 1) forwards;
-}
-@keyframes themeWipeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes themeWipeOut {
-  from { opacity: 1; }
-  to   { opacity: 0; }
+#theme-wipe.visible {
+  opacity: 1;
 }
 
 body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -1628,13 +1610,16 @@ async function loadLeaderboard(){
   }
 }
 
-// ══ THEME TRANSITION — CLEAN FADE ══
-// How it works:
-// 1. Set overlay to the TARGET theme's background colour (so fading in = transitioning towards new theme)
-// 2. Overlay fades IN (0.32s) — covers screen
-// 3. At peak opacity: switch data-theme attribute instantly
-// 4. Overlay fades OUT (0.55s) — screen below has already switched, elements colour-transition during fade-out
-// Total: ~0.87s, no glitch, no !important conflict, works on mobile
+// ══ THEME TRANSITION — FREEZE / SWAP / UNFREEZE ══
+//
+// Step 1: Overlay fades IN  (0.38s)  — screen covered, neutral mid-grey
+// Step 2: At peak opacity   (0ms)    — add .no-transition, kills all CSS transitions
+//                                       swap data-theme instantly, zero flicker possible
+//                                       remove .no-transition after one frame so future
+//                                       hover transitions work normally again
+// Step 3: Overlay fades OUT (0.38s)  — reveals new theme, crisp and immediate
+// Total: ~0.76s, smooth, zero blink, works identically on mobile
+
 function toggleTheme(){
   if(themeToggleLocked)return;
   themeToggleLocked=true;
@@ -1645,32 +1630,28 @@ function toggleTheme(){
   const wipe=document.getElementById('theme-wipe');
   const thumb=document.getElementById('theme-thumb');
 
-  // Set overlay colour = what the TARGET theme looks like (smooth landing)
-  // dark→light: overlay is the light sky colour
-  // light→dark: overlay is the dark bg colour
-  wipe.style.background = next==='light'
-    ? 'linear-gradient(180deg, #87c0f5 0%, #b5d9fa 100%)'
-    : '#08091a';
-
-  // Phase 1: fade IN
-  wipe.style.transition='opacity 0.32s ease';
-  wipe.style.opacity='1';
+  // STEP 1 — fade overlay IN
+  wipe.classList.add('visible');
 
   setTimeout(()=>{
-    // Phase 2: switch theme instantly while hidden
-    html.setAttribute('data-theme',next);
-    thumb.textContent=next==='dark'?'🌙':'☀️';
-    localStorage.setItem('nihongo_theme',next);
+    // STEP 2 — freeze all transitions, swap theme, unfreeze next frame
+    html.classList.add('no-transition');
+    html.setAttribute('data-theme', next);
+    thumb.textContent = next==='dark' ? '🌙' : '☀️';
+    localStorage.setItem('nihongo_theme', next);
 
-    // Phase 3: fade OUT — elements colour-transition during this window
-    wipe.style.transition='opacity 0.55s ease';
-    wipe.style.opacity='0';
+    // One rAF ensures the browser applies the new data-theme before
+    // we remove no-transition, so there's no in-between paint
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        html.classList.remove('no-transition');
 
-    setTimeout(()=>{
-      wipe.style.transition='';
-      themeToggleLocked=false;
-    },580);
-  },340);
+        // STEP 3 — fade overlay OUT
+        wipe.classList.remove('visible');
+        setTimeout(()=>{ themeToggleLocked=false; }, 420);
+      });
+    });
+  }, 400); // wait for overlay to fully cover (38s + a tiny buffer)
 }
 
 // ══ STARS ══
